@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../services/session_service.dart'; // Import session service
 import 'profile_page.dart';
 import 'library_page.dart';
 import 'your_page.dart';
@@ -10,6 +11,9 @@ class HomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // CORRECT WAY: Get user data from the session service when needed
+    final userName = SessionService().user?.userName ?? 'User';
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.white,
@@ -25,80 +29,87 @@ class HomePage extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: CircleAvatar(
-              backgroundColor: Colors.grey[300],
-              child: const Text('User', style: TextStyle(fontSize: 12, color: Colors.black54)),
+              backgroundColor: Colors.indigo[100],
+              child: Text(
+                // Use the first letter of the username from the session
+                userName.isNotEmpty ? userName.substring(0, 1).toUpperCase() : 'U',
+                style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.indigo),
+              ),
             ),
           )
         ],
       ),
-      body: Column(
-        children: [
-          // Hero Section
-          Container(
-            color: Colors.grey[300],
-            height: 200,
-            width: double.infinity,
-            child: const Center(
-              child: Text(
-                'Hero Section',
-                style: TextStyle(fontSize: 24, color: Colors.black54),
+      body: SingleChildScrollView(
+        child: Column(
+          children: [
+            SizedBox(
+              height: 200,
+              width: double.infinity,
+              child: Image.network(
+                'https://res.cloudinary.com/dygipvoal/image/upload/v1760081448/jirj9tgnupvsa0blmaua.jpg',
+                fit: BoxFit.cover,
               ),
             ),
-          ),
-          // Grid Menu
-          Expanded(
-            child: GridView.count(
+            GridView.count(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
               crossAxisCount: 2,
               padding: const EdgeInsets.all(20),
               crossAxisSpacing: 20,
               mainAxisSpacing: 20,
               children: <Widget>[
-                _buildMenuCard(context, 'Create new'),
-                _buildMenuCard(context, 'Library'),
-                _buildMenuCard(context, 'Your'),
-                _buildMenuCard(context, 'Profile'),
+                _buildMenuCard(context, 'Create new', const Color(0xFFF44336)),
+                _buildMenuCard(context, 'Library', const Color(0xFF4CAF50)),
+                _buildMenuCard(context, 'Your', const Color(0xFF2196F3)),
+                _buildMenuCard(context, 'Profile', const Color(0xFFFF9800)),
               ],
             ),
-          ),
-        ],
+          ],
+        ),
       ),
-      bottomNavigationBar: const CustomBottomNavBar(currentItem: NavItem.home),
+      bottomNavigationBar: const CustomBottomNavBar(currentItem: NavItem.home), 
     );
   }
 
-  Widget _buildMenuCard(BuildContext context, String title) {
+  Widget _buildMenuCard(BuildContext context, String title, Color color) {
     return GestureDetector(
       onTap: () {
+        // CORRECT WAY: Navigate to pages without passing any arguments
         if (title == 'Profile') {
-          Navigator.of(context).pushAndRemoveUntil(
-            MaterialPageRoute(builder: (context) => const ProfilePage()),
-            (route) => false,
-          );
+          Navigator.of(context).push(MaterialPageRoute(
+            builder: (context) => const ProfilePage(),
+          ));
         } else if (title == 'Library') {
-          Navigator.of(context).pushAndRemoveUntil(
-            MaterialPageRoute(builder: (context) => const LibraryPage()),
-            (route) => false,
-          );
+          Navigator.of(context).push(MaterialPageRoute(
+            builder: (context) => const LibraryPage(),
+          ));
         } else if (title == 'Your') {
-           Navigator.of(context).pushAndRemoveUntil(
-            MaterialPageRoute(builder: (context) => const YourPage()),
-            (route) => false,
-          );
+          Navigator.of(context).push(MaterialPageRoute(
+            builder: (context) => const YourPage(),
+          ));
         } else if (title == 'Create new') {
-           Navigator.of(context).push(
-            MaterialPageRoute(builder: (context) => const CreateNewPage()),
-          );
+          Navigator.of(context).push(MaterialPageRoute(
+            builder: (context) => const CreateNewPage(),
+          ));
         }
       },
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.grey[300],
-          borderRadius: BorderRadius.circular(10),
+          color: color,
+          borderRadius: BorderRadius.circular(20),
+           boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.2),
+              spreadRadius: 1,
+              blurRadius: 5,
+              offset: const Offset(0, 3),
+            ),
+          ],
         ),
         child: Center(
           child: Text(
             title,
-            style: const TextStyle(fontSize: 18, color: Colors.black54),
+            style: const TextStyle(fontSize: 22, color: Colors.white, fontWeight: FontWeight.bold),
           ),
         ),
       ),

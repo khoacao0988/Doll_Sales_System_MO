@@ -1,107 +1,112 @@
 import 'package:flutter/material.dart';
-import '../widgets/custom_bottom_nav_bar.dart';
 
 class SelectCharacterPage extends StatelessWidget {
   const SelectCharacterPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    // Dummy Data for available characters
     final List<String> availableCharacters = ['Captain Astro', 'Mystic Sorceress', 'Cyber Runner', 'Forest Guardian'];
+    const Color primaryColor = Color(0xFF9C27B0); // Purple
 
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
+        title: const Text('Choose a Character', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
         backgroundColor: Colors.white,
         elevation: 0,
-        leading: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Container(
-            color: Colors.grey[300],
-            child: const Center(child: Text('Logo web', style: TextStyle(fontSize: 10, color: Colors.black54))),
-          ),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          onPressed: () => Navigator.of(context).pop(), // Just pop without a value
         ),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: CircleAvatar(
-              backgroundColor: Colors.grey[300],
-              child: const Text('User', style: TextStyle(fontSize: 12, color: Colors.black54)),
-            ),
-          )
-        ],
       ),
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16.0),
         child: Column(
           children: [
-            // Search Bar
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 8.0),
               child: TextField(
                 decoration: InputDecoration(
-                  hintText: 'Search bar',
-                  prefixIcon: const Icon(Icons.search),
+                  hintText: 'Search for a character...',
+                  prefixIcon: const Icon(Icons.search, color: primaryColor),
                   filled: true,
-                  fillColor: Colors.grey[200],
-                  border: const OutlineInputBorder(
-                    borderRadius: BorderRadius.all(Radius.circular(10.0)),
+                  fillColor: primaryColor.withOpacity(0.05),
+                   border: const OutlineInputBorder(
+                    borderRadius: BorderRadius.all(Radius.circular(12.0)),
                     borderSide: BorderSide.none,
                   ),
                 ),
               ),
             ),
-            const SizedBox(height: 16),
-            // Grid View
+            const SizedBox(height: 20),
             Expanded(
               child: GridView.builder(
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: 2,
-                  crossAxisSpacing: 10,
-                  mainAxisSpacing: 10,
+                  crossAxisSpacing: 16,
+                  mainAxisSpacing: 16,
                   childAspectRatio: 0.8,
                 ),
                 itemCount: availableCharacters.length,
                 itemBuilder: (context, index) {
                   final characterName = availableCharacters[index];
-                  return _buildGridItem(context, characterName);
+                  return _buildGridItem(context, characterName, primaryColor);
                 },
               ),
             ),
           ],
         ),
       ),
-      bottomNavigationBar: const CustomBottomNavBar(currentItem: NavItem.add),
     );
   }
 
-  Widget _buildGridItem(BuildContext context, String name) {
-    return Card(
-      color: Colors.grey[200],
-      elevation: 0,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+  Widget _buildGridItem(BuildContext context, String name, Color color) {
+    return Container(
+       decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.shade200),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.1),
+            spreadRadius: 1,
+            blurRadius: 5,
+            offset: const Offset(0, 2),
+          )
+        ]
+      ),
       child: Padding(
         padding: const EdgeInsets.all(8.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            // Image placeholder
             AspectRatio(
               aspectRatio: 1.0,
               child: Container(
-                color: Colors.white,
+                 decoration: BoxDecoration(
+                  color: Colors.grey[100],
+                  borderRadius: BorderRadius.circular(8),
+                   image: const DecorationImage(
+                    image: NetworkImage('https://placekitten.com/201/201'), // Placeholder
+                    fit: BoxFit.cover,
+                  ),
+                ),
               ),
             ),
             Text(name, style: const TextStyle(fontWeight: FontWeight.bold)),
             ElevatedButton(
               onPressed: () {
-                // TODO: Pass the selected character back to the CreateNewPage
-                Navigator.of(context).pop();
+                // Pass the selected character's name back to the previous screen
+                Navigator.of(context).pop(name);
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.white,
-                foregroundColor: Colors.black,
+                backgroundColor: color,
+                foregroundColor: Colors.white,
                 elevation: 0,
                 minimumSize: const Size(100, 36),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
               ),
               child: const Text('Choose'),
             ),
