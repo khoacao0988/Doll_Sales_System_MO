@@ -10,7 +10,10 @@ enum NavItem { home, checklist, add, library, profile }
 class CustomBottomNavBar extends StatelessWidget {
   final NavItem currentItem;
 
-  const CustomBottomNavBar({super.key, required this.currentItem});
+  const CustomBottomNavBar({
+    super.key,
+    required this.currentItem,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -36,14 +39,14 @@ class CustomBottomNavBar extends StatelessWidget {
     if (item == NavItem.add) {
       return GestureDetector(
         onTap: () {
-            if (isSelected) return;
-             Navigator.of(context).push(
-                MaterialPageRoute(builder: (context) => const CreateNewPage()),
-            );
+          if (isSelected) return;
+          Navigator.of(context).push(
+            MaterialPageRoute(builder: (context) => const CreateNewPage()),
+          );
         },
         child: CircleAvatar(
-            backgroundColor: isSelected ? Colors.deepPurple : Colors.black,
-            child: const Icon(Icons.add, color: Colors.white),
+          backgroundColor: isSelected ? Colors.deepPurple : Colors.black,
+          child: const Icon(Icons.add, color: Colors.white),
         ),
       );
     }
@@ -55,13 +58,13 @@ class CustomBottomNavBar extends StatelessWidget {
 
         switch (item) {
           case NavItem.home:
-            Navigator.of(context).pushAndRemoveUntil(
+             Navigator.of(context).pushAndRemoveUntil(
               MaterialPageRoute(builder: (context) => const HomePage()),
               (route) => false,
             );
             break;
           case NavItem.profile:
-            Navigator.of(context).pushAndRemoveUntil(
+             Navigator.of(context).pushAndRemoveUntil(
               MaterialPageRoute(builder: (context) => const ProfilePage()),
               (route) => false,
             );
@@ -78,8 +81,8 @@ class CustomBottomNavBar extends StatelessWidget {
               (route) => false,
             );
             break;
-          case NavItem.add: // This case is now handled by the GestureDetector above
-             break;
+          case NavItem.add:
+            break;
         }
       },
     );

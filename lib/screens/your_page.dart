@@ -6,7 +6,8 @@ class YourPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Dummy Data
+    const Color primaryColor = Color(0xFF2196F3); // Blue
+
     final List<Map<String, String>> connectedItems = [
       {'doll': 'Cute Bunny', 'character': 'Warrior Princess', 'status': 'Using'},
       {'doll': 'Robo Dog', 'character': 'Space Explorer', 'status': 'Choose'},
@@ -15,27 +16,14 @@ class YourPage extends StatelessWidget {
     ];
 
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
+        title: const Text('Your Connections', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
         backgroundColor: Colors.white,
         elevation: 0,
-        leading: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Container(
-            color: Colors.grey[300],
-            child: const Center(child: Text('Logo web', style: TextStyle(fontSize: 10, color: Colors.black54))),
-          ),
-        ),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: CircleAvatar(
-              backgroundColor: Colors.grey[300],
-              child: const Text('User', style: TextStyle(fontSize: 12, color: Colors.black54)),
-            ),
-          )
-        ],
+         automaticallyImplyLeading: false,
       ),
-      body: Padding(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 16.0),
         child: Column(
           children: [
@@ -44,47 +32,57 @@ class YourPage extends StatelessWidget {
               padding: const EdgeInsets.symmetric(vertical: 8.0),
               child: TextField(
                 decoration: InputDecoration(
-                  hintText: 'Search bar',
-                  prefixIcon: const Icon(Icons.search),
+                  hintText: 'Search your connections...',
+                  prefixIcon: const Icon(Icons.search, color: primaryColor),
                   filled: true,
-                  fillColor: Colors.grey[200],
+                   fillColor: primaryColor.withOpacity(0.05),
                   border: const OutlineInputBorder(
-                    borderRadius: BorderRadius.all(Radius.circular(10.0)),
+                    borderRadius: BorderRadius.all(Radius.circular(12.0)),
                     borderSide: BorderSide.none,
                   ),
                 ),
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 20),
             // Grid View
-            Expanded(
-              child: GridView.builder(
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  crossAxisSpacing: 10,
-                  mainAxisSpacing: 10,
-                  childAspectRatio: 0.8,
-                ),
-                itemCount: connectedItems.length,
-                itemBuilder: (context, index) {
-                  final item = connectedItems[index];
-                  return _buildGridItem(item['doll']!, item['character']!, item['status']!);
-                },
+            GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                crossAxisSpacing: 16,
+                mainAxisSpacing: 16,
+                childAspectRatio: 0.8,
               ),
+              itemCount: connectedItems.length,
+              itemBuilder: (context, index) {
+                final item = connectedItems[index];
+                return _buildGridItem(item['doll']!, item['character']!, item['status']!, primaryColor, index + 1);
+              },
             ),
           ],
         ),
       ),
-       bottomNavigationBar: const CustomBottomNavBar(currentItem: NavItem.checklist), // Checklist is the second item
+       bottomNavigationBar: const CustomBottomNavBar(currentItem: NavItem.checklist),
     );
   }
 
-  Widget _buildGridItem(String dollName, String characterName, String status) {
+  Widget _buildGridItem(String dollName, String characterName, String status, Color color, int optionNumber) {
     final isUsing = status == 'Using';
-    return Card(
-      color: Colors.grey[200],
-      elevation: 0,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+    return Container(
+       decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: isUsing ? color : Colors.grey.shade200),
+        boxShadow: [
+          BoxShadow(
+            color: isUsing ? color.withOpacity(0.2) : Colors.grey.withOpacity(0.1),
+            spreadRadius: 1,
+            blurRadius: 5,
+            offset: const Offset(0, 2),
+          )
+        ]
+      ),
       child: Padding(
         padding: const EdgeInsets.all(8.0),
         child: Column(
@@ -95,29 +93,38 @@ class YourPage extends StatelessWidget {
               aspectRatio: 1.0,
               child: Stack(
                 children: [
-                  Container(color: Colors.white),
-                  const Center(child: Divider(color: Colors.black, thickness: 1)),
-                  const Positioned(
+                  Container(
+                     decoration: BoxDecoration(
+                      color: Colors.grey[100],
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  const Center(child: Divider(color: Colors.grey, thickness: 1)),
+                  Positioned(
                     top: 10,
                     right: 10,
-                    child: Text('Doll', style: TextStyle(color: Colors.black54, fontSize: 12)),
+                    child: Text('Doll', style: TextStyle(color: Colors.grey[700], fontSize: 12, fontWeight: FontWeight.bold)),
                   ),
-                   const Positioned(
+                   Positioned(
                     bottom: 10,
                     left: 10,
-                    child: Text('Character', style: TextStyle(color: Colors.black54, fontSize: 12)),
+                    child: Text('Character', style: TextStyle(color: Colors.grey[700], fontSize: 12, fontWeight: FontWeight.bold)),
                   ),
                 ],
               ),
             ),
-            Text('Option ${connectedItems.indexOf(connectedItems.firstWhere((element) => element['doll'] == dollName)) + 1}', style: const TextStyle(fontWeight: FontWeight.bold)),
+            Text('Option $optionNumber', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
             ElevatedButton(
-              onPressed: () {},
+              onPressed: isUsing ? null : () {},
               style: ElevatedButton.styleFrom(
-                backgroundColor: isUsing ? Colors.grey[400] : Colors.white,
-                foregroundColor: Colors.black,
+                backgroundColor: color,
+                foregroundColor: Colors.white,
+                disabledBackgroundColor: color.withOpacity(0.5),
                 elevation: 0,
                 minimumSize: const Size(100, 36),
+                 shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
               ),
               child: Text(status),
             ),
@@ -127,12 +134,3 @@ class YourPage extends StatelessWidget {
     );
   }
 }
-
-// A bit of a hack to get the index for the option number. 
-// In a real app, the data model would have an ID.
-final List<Map<String, String>> connectedItems = [
-  {'doll': 'Cute Bunny', 'character': 'Warrior Princess', 'status': 'Using'},
-  {'doll': 'Robo Dog', 'character': 'Space Explorer', 'status': 'Choose'},
-  {'doll': 'Teddy Bear', 'character': 'Mage', 'status': 'Choose'},
-  {'doll': 'Pikachu', 'character': 'Ninja', 'status': 'Choose'},
-];

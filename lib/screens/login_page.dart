@@ -1,131 +1,210 @@
 import 'package:flutter/material.dart';
+import 'package:jwt_decoder/jwt_decoder.dart';
+import '../services/auth_service.dart';
+import '../services/session_service.dart';
 import 'home_page.dart';
 
-class LoginPage extends StatelessWidget {
+class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
+
+  @override
+  State<LoginPage> createState() => _LoginPageState();
+}
+
+class _LoginPageState extends State<LoginPage> {
+  final _usernameController = TextEditingController();
+  final _passwordController = TextEditingController();
+  final _authService = AuthService();
+
+  bool _isLoading = false;
+  String? _errorMessage;
+
+  Future<void> _login() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      // 1. Login to get the access token
+      final authResponse = await _authService.login(
+        _usernameController.text,
+        _passwordController.text,
+      );
+      
+      // 2. Decode the token to get the user ID
+      final Map<String, dynamic> decodedToken = JwtDecoder.decode(authResponse.accessToken);
+      final userId = int.parse(decodedToken['sub'] ?? '0');
+
+      if (userId == 0) {
+        throw Exception('User ID not found in token.');
+      }
+
+      // 3. Fetch the full user details using the ID
+      final user = await _authService.getUserDetailsById(userId, authResponse.accessToken);
+      
+      // 4. Save the complete session information
+      SessionService().setSession(authResponse, user);
+
+      if (mounted) {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(
+            builder: (context) => const HomePage(),
+          ),
+        );
+      }
+    } catch (e) {
+      setState(() {
+        _errorMessage = e.toString().replaceFirst('Exception: ', '');
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () {
-            // In a real app, you might navigate back or close the app
-          },
-        ),
-      ),
-      body: Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0),
-          child: Container(
-            padding: const EdgeInsets.all(24.0),
-            decoration: BoxDecoration(
-              color: Colors.grey[200],
-              borderRadius: BorderRadius.circular(10.0),
-            ),
+      backgroundColor: Colors.white,
+      body: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 24.0),
             child: Column(
-              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: <Widget>[
                 const Text(
-                  'LOGIN',
+                  'Character Doll',
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    fontSize: 20,
+                    fontSize: 36,
                     fontWeight: FontWeight.bold,
+                    color: Color(0xFF3F51B5),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                const Text(
+                  'Welcome back!',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 18,
                     color: Colors.black54,
                   ),
                 ),
-                const SizedBox(height: 30),
-                const TextField(
-                  decoration: InputDecoration(
+                const SizedBox(height: 50),
+                if (_errorMessage != null)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 16.0),
+                    child: Text(
+                      _errorMessage!,
+                      style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                TextField(
+                  controller: _usernameController,
+                  decoration: const InputDecoration(
                     hintText: 'Username',
                     filled: true,
-                    fillColor: Colors.white,
+                    fillColor: Color(0xFFF1F4FF),
+                    prefixIcon: Icon(Icons.person_outline, color: Color(0xFF3F51B5)),
                     border: OutlineInputBorder(
+                      borderRadius: BorderRadius.all(Radius.circular(12)),
                       borderSide: BorderSide.none,
                     ),
-                    contentPadding: EdgeInsets.all(16),
                   ),
                 ),
                 const SizedBox(height: 16),
-                const TextField(
+                TextField(
+                  controller: _passwordController,
                   obscureText: true,
-                  decoration: InputDecoration(
+                  decoration: const InputDecoration(
                     hintText: 'Password',
                     filled: true,
-                    fillColor: Colors.white,
+                    fillColor: Color(0xFFF1F4FF),
+                    prefixIcon: Icon(Icons.lock_outline, color: Color(0xFF3F51B5)),
                     border: OutlineInputBorder(
+                      borderRadius: BorderRadius.all(Radius.circular(12)),
                       borderSide: BorderSide.none,
                     ),
-                    contentPadding: EdgeInsets.all(16),
                   ),
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 30),
                 ElevatedButton(
-                  onPressed: () {
-                    Navigator.of(context).pushReplacement(
-                      MaterialPageRoute(builder: (context) => const HomePage()),
-                    );
-                  },
+                  onPressed: _isLoading ? null : _login,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.white,
-                    foregroundColor: Colors.black,
-                    elevation: 0,
+                    backgroundColor: const Color(0xFF3F51B5),
+                    foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: const ContinuousRectangleBorder(),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
-                  child: const Text('Login'),
+                  child: _isLoading
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                        )
+                      : const Text('LOGIN', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                 ),
-                const SizedBox(height: 16),
+                 const SizedBox(height: 20),
                 Row(
                   children: <Widget>[
                     const Expanded(child: Divider(color: Colors.grey)),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 8.0),
                       child: Text(
-                        'Or',
+                        'Or continue with',
                         style: TextStyle(color: Colors.grey[600]),
                       ),
                     ),
                     const Expanded(child: Divider(color: Colors.grey)),
                   ],
                 ),
-                const SizedBox(height: 16),
-                ElevatedButton(
+                const SizedBox(height: 20),
+
+                // Google Login Button
+                 OutlinedButton.icon(
+                  icon: const Icon(Icons.g_mobiledata, color: Colors.red), // Using a placeholder icon
+                  label: const Text('Google', style: TextStyle(color: Colors.black54, fontWeight: FontWeight.bold)),
                   onPressed: () {
                     // TODO: Implement Google Login
                   },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.white,
-                    foregroundColor: Colors.black,
-                    elevation: 0,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: const ContinuousRectangleBorder(),
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    side: BorderSide(color: Colors.grey.shade300),
+                     shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
-                  child: const Text('Login with Google'),
                 ),
-                const SizedBox(height: 24),
+
+                const SizedBox(height: 40),
+
+                // Register Text
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      "Don't have an account? ",
-                      style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                      "Not a member? ",
+                      style: TextStyle(color: Colors.grey[600], fontSize: 14),
                     ),
                     GestureDetector(
                       onTap: () {
                         // TODO: Navigate to Register Page
                       },
                       child: const Text(
-                        'Register',
+                        'Register now',
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
-                          color: Colors.black,
-                          fontSize: 12,
+                          color: Color(0xFF3F51B5), // Indigo
+                          fontSize: 14,
                         ),
                       ),
                     ),
