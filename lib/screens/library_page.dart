@@ -61,10 +61,19 @@ class _LibraryPageState extends State<LibraryPage> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text('Library', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.white,
+        title: const Text('Library', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        backgroundColor: Colors.transparent,
         elevation: 0,
         automaticallyImplyLeading: false,
+        flexibleSpace: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Color(0xFF6A11CB), Color(0xFF2575FC)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+        ),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -100,7 +109,7 @@ class _LibraryPageState extends State<LibraryPage> {
             ),
             const SizedBox(height: 20),
             _showDolls
-                ? _buildDollsGrid() 
+                ? _buildDollsGrid()
                 : _buildCharactersGrid(),
           ],
         ),
@@ -175,14 +184,14 @@ class _LibraryPageState extends State<LibraryPage> {
 
   Widget _buildToggleButton(BuildContext context, String text, bool isSelected, Color color) {
     return GestureDetector(
-       onTap: () {
+      onTap: () {
         setState(() {
           _showDolls = text == 'Dolls';
         });
       },
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 12),
-         decoration: BoxDecoration(
+        decoration: BoxDecoration(
           color: isSelected ? color : Colors.transparent,
           borderRadius: BorderRadius.circular(12),
         ),
@@ -201,7 +210,7 @@ class _LibraryPageState extends State<LibraryPage> {
 
   Widget _buildGridItem(String name, String? imageUrl, bool isUsing, Color color) {
     return Container(
-       decoration: BoxDecoration(
+      decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Colors.grey.shade200),
@@ -212,17 +221,16 @@ class _LibraryPageState extends State<LibraryPage> {
             blurRadius: 5,
             offset: const Offset(0, 2),
           )
-        ]
+        ],
       ),
       child: Padding(
         padding: const EdgeInsets.all(8.0),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            AspectRatio(
-              aspectRatio: 1.0,
+            Expanded(
               child: Container(
-                 decoration: BoxDecoration(
+                decoration: BoxDecoration(
                   color: Colors.grey[100],
                   borderRadius: BorderRadius.circular(8),
                   image: DecorationImage(
@@ -232,23 +240,16 @@ class _LibraryPageState extends State<LibraryPage> {
                 ),
               ),
             ),
-            Text(name, style: const TextStyle(fontWeight: FontWeight.bold)),
-            ElevatedButton(
-              onPressed: isUsing ? null : () {},
-              style: ElevatedButton.styleFrom(
-                backgroundColor: color,
-                foregroundColor: Colors.white,
-                disabledBackgroundColor: Colors.grey[300],
-                elevation: 0,
-                minimumSize: const Size(100, 36),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-              child: Text(isUsing ? 'Using' : 'Choose'),
+            const SizedBox(height: 8),
+            Text(
+              name,
+              style: const TextStyle(fontWeight: FontWeight.bold),
+              textAlign: TextAlign.center,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
             ),
           ],
-        ), 
+        ),
       ),
     );
   }

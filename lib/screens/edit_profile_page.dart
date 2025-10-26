@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import '../widgets/custom_bottom_nav_bar.dart';
+import 'package:second/models/user.dart';
+import 'package:second/services/session_service.dart';
 
 class EditProfilePage extends StatefulWidget {
-  // REVERTED: No longer requires a user object.
   const EditProfilePage({super.key});
 
   @override
@@ -10,123 +10,89 @@ class EditProfilePage extends StatefulWidget {
 }
 
 class _EditProfilePageState extends State<EditProfilePage> {
-  late TextEditingController _nameController;
+  late TextEditingController _usernameController;
   late TextEditingController _emailController;
-  late TextEditingController _phoneController;
+  late TextEditingController _phonesController;
 
   @override
   void initState() {
     super.initState();
-    // REVERTED: Using static data for initial values.
-    _nameController = TextEditingController(text: 'character_doll_fan');
-    _emailController = TextEditingController(text: 'myemail@email.com');
-    _phoneController = TextEditingController(text: '');
+    final User? user = SessionService().user;
+    _usernameController = TextEditingController(text: user?.userName ?? '');
+    _emailController = TextEditingController(text: user?.email ?? '');
+    _phonesController = TextEditingController(text: user?.phones ?? '');
   }
 
   @override
   void dispose() {
-    _nameController.dispose();
+    _usernameController.dispose();
     _emailController.dispose();
-    _phoneController.dispose();
+    _phonesController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    const Color primaryColor = Color(0xFF3F51B5); // Indigo
-
     return Scaffold(
-      backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text('Edit Profile', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.white,
+        title: const Text('Edit Profile', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Navigator.of(context).pop(),
+        ),
+        flexibleSpace: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Color(0xFF6A11CB), Color(0xFF2575FC)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
         ),
       ),
       body: ListView(
-        padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 10.0),
-        children: <Widget>[
+        padding: const EdgeInsets.all(24.0),
+        children: [
           const SizedBox(height: 20),
-          Center(
-            child: Stack(
-              children: [
-                 CircleAvatar(
-                  radius: 70,
-                  backgroundColor: primaryColor.withOpacity(0.1),
-                  child: const CircleAvatar(
-                    radius: 65,
-                     backgroundImage: NetworkImage('https://placekitten.com/200/200'),
-                  ),
-                ),
-                Positioned(
-                  bottom: 0,
-                  right: 0,
-                  child: CircleAvatar(
-                    radius: 20,
-                    backgroundColor: Colors.white,
-                    child: Icon(Icons.camera_alt, color: primaryColor, size: 22),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 50),
-          _buildTextField('Full Name', Icons.person_outline, primaryColor, _nameController),
+          _buildTextField(_usernameController, 'Username', Icons.person_outline),
           const SizedBox(height: 16),
-          _buildTextField('Email', Icons.email_outlined, primaryColor, _emailController),
+          _buildTextField(_emailController, 'Email', Icons.email_outlined),
           const SizedBox(height: 16),
-          _buildTextField('Phone Number', Icons.phone_outlined, primaryColor, _phoneController),
+          _buildTextField(_phonesController, 'Phone Number', Icons.phone_outlined),
           const SizedBox(height: 40),
           ElevatedButton(
             onPressed: () {
-              // TODO: Implement Save Logic using the controllers' text
-              Navigator.of(context).pop(); // Go back to profile page
+              // TODO: Implement save logic
+              Navigator.of(context).pop();
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: primaryColor,
+              backgroundColor: const Color(0xFF3F51B5),
               foregroundColor: Colors.white,
-              elevation: 2,
-              padding: const EdgeInsets.symmetric(vertical: 14),
+              padding: const EdgeInsets.symmetric(vertical: 16),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
             ),
-            child: const Text('Save Changes', style: TextStyle(fontWeight: FontWeight.bold)),
+            child: const Text('Save Changes', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
           ),
-          const SizedBox(height: 16),
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop(); // Go back to profile page
-            },
-            child: const Text('Cancel', style: TextStyle(color: Colors.black54)),
-          )
         ],
       ),
-      // REVERTED: No longer passes user.
-      bottomNavigationBar: const CustomBottomNavBar(currentItem: NavItem.profile),
     );
   }
 
-  Widget _buildTextField(String hint, IconData icon, Color color, TextEditingController controller) {
+  Widget _buildTextField(TextEditingController controller, String label, IconData icon) {
     return TextField(
       controller: controller,
       decoration: InputDecoration(
-        labelText: hint,
-        prefixIcon: Icon(icon, color: color),
-        labelStyle: TextStyle(color: Colors.grey[600]),
-        filled: true,
-        fillColor: color.withOpacity(0.05),
+        labelText: label,
+        prefixIcon: Icon(icon, color: const Color(0xFF3F51B5)),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide.none,
         ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: color),
-        ),
+        filled: true,
+        fillColor: Colors.grey[50],
       ),
     );
   }

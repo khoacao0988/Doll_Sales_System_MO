@@ -5,7 +5,9 @@ import '../models/owned_character.dart';
 import '../models/character.dart';
 import '../models/owned_doll.dart';
 import '../models/doll_variant.dart';
+import '../models/doll_character_link.dart';
 import '../models/user.dart';
+import '../models/user_character.dart';
 
 class AuthService {
   static const String _baseUrl = 'https://10.0.2.2:7152';
@@ -89,6 +91,58 @@ class AuthService {
       return dollVariantFromJson(response.body);
     } else {
       throw Exception('Failed to load doll variant details. Status code: ${response.statusCode}');
+    }
+  }
+
+  Future<DollCharacterLink?> getDollCharacterLink(int ownedDollId, String token) async {
+    final response = await http.get(
+      Uri.parse('$_baseUrl/api/DollCharacterLink/owneddoll/$ownedDollId'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+    if (response.statusCode == 200) {
+      return dollCharacterLinkFromJson(response.body);
+    } else if (response.statusCode == 404) {
+      return null;
+    } else {
+      throw Exception('Failed to check doll link status. Status code: ${response.statusCode}');
+    }
+  }
+
+  Future<OwnedDoll> getSingleOwnedDoll(int ownedDollId, String token) async {
+    final response = await http.get(
+      Uri.parse('$_baseUrl/api/OwnedDoll/$ownedDollId'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+    if (response.statusCode == 200) {
+      return singleOwnedDollFromJson(response.body);
+    } else {
+      throw Exception('Failed to load owned doll. Status code: ${response.statusCode}');
+    }
+  }
+
+  Future<UserCharacter> getSingleUserCharacter(int userCharacterId, String token) async {
+    final response = await http.get(
+      Uri.parse('$_baseUrl/api/UserCharacter/$userCharacterId'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> jsonData = json.decode(response.body);
+      return UserCharacter.fromJson(jsonData['data']);
+    } else {
+      throw Exception('Failed to load user character. Status code: ${response.statusCode}');
+    }
+  }
+
+  // New method to delete a doll-character link
+  Future<void> deleteDollCharacterLink(int linkId, String token) async {
+    final response = await http.delete(
+      Uri.parse('$_baseUrl/api/DollCharacterLink/$linkId'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+
+    if (response.statusCode != 200 && response.statusCode != 204) {
+      // 200 OK or 204 No Content are both success statuses for DELETE
+      throw Exception('Failed to delete connection. Status code: ${response.statusCode}');
     }
   }
 }

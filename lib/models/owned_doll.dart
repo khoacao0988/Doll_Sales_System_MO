@@ -1,10 +1,16 @@
 import 'dart:convert';
 
-// A function to parse the list of owned dolls from the API response
+// Parses a list of owned dolls from the list API response
 List<OwnedDoll> ownedDollFromJson(String str) {
   final Map<String, dynamic> jsonData = json.decode(str);
   final List<dynamic> dollList = jsonData['data'] ?? [];
   return List<OwnedDoll>.from(dollList.map((x) => OwnedDoll.fromJson(x)));
+}
+
+// Parses a single owned doll from the single-item API response
+OwnedDoll singleOwnedDollFromJson(String str) {
+  final Map<String, dynamic> jsonData = json.decode(str);
+  return OwnedDoll.fromJson(jsonData['data']);
 }
 
 class OwnedDoll {

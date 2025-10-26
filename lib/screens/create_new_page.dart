@@ -1,136 +1,90 @@
 import 'package:flutter/material.dart';
+import 'package:second/screens/select_character_page.dart';
+import 'package:second/screens/select_doll_page.dart';
 import '../widgets/custom_bottom_nav_bar.dart';
-import 'select_doll_page.dart';
-import 'select_character_page.dart';
 
-class CreateNewPage extends StatefulWidget {
+class CreateNewPage extends StatelessWidget {
   const CreateNewPage({super.key});
-
-  @override
-  State<CreateNewPage> createState() => _CreateNewPageState();
-}
-
-class _CreateNewPageState extends State<CreateNewPage> {
-  String? selectedDoll;
-  String? selectedCharacter;
-  final Color primaryColor = const Color(0xFF9C27B0); // Purple
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        title: const Text('Create New Connection', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.start,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const SizedBox(height: 20),
-            _buildSelectionCard(
-              context,
-              title: 'Doll',
-              subtitle: selectedDoll ?? 'Tap to choose a doll',
-              icon: Icons.smart_toy_outlined,
-              onTap: () async {
-                final result = await Navigator.of(context).push(MaterialPageRoute(builder: (_) => const SelectDollPage()));
-                if (result != null && result is String) {
-                  setState(() {
-                    selectedDoll = result;
-                  });
-                }
-              },
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 20.0),
-              child: Icon(Icons.add_circle_outline, size: 40, color: primaryColor.withOpacity(0.5)),
-            ),
-            _buildSelectionCard(
-              context,
-              title: 'Character',
-              subtitle: selectedCharacter ?? 'Tap to choose a character',
-              icon: Icons.person_search_outlined,
-              onTap: () async {
-                final result = await Navigator.of(context).push(MaterialPageRoute(builder: (_) => const SelectCharacterPage()));
-                if (result != null && result is String) {
-                  setState(() {
-                    selectedCharacter = result;
-                  });
-                }
-              },
-            ),
-            const Spacer(),
-            ElevatedButton(
-              onPressed: (selectedDoll != null && selectedCharacter != null)
-                  ? () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          backgroundColor: primaryColor,
-                          content: Text('Success! Connected $selectedDoll with $selectedCharacter'),
-                        ),
-                      );
-                      Future.delayed(const Duration(seconds: 2), () {
-                        if (mounted) {
-                           Navigator.of(context).pop();
-                        }
-                      });
-                    }
-                  : null, // Button is disabled if either is null
-              style: ElevatedButton.styleFrom(
-                backgroundColor: primaryColor,
-                foregroundColor: Colors.white,
-                disabledBackgroundColor: Colors.grey[300],
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
+        appBar: AppBar(
+          title: const Text('Create New', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          automaticallyImplyLeading: false,
+          flexibleSpace: Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Color(0xFF6A11CB), Color(0xFF2575FC)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
               ),
-              child: const Text('CREATE CONNECTION', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
             ),
-            const SizedBox(height: 20),
-          ],
+          ),
         ),
-      ),
-      bottomNavigationBar: const CustomBottomNavBar(currentItem: NavItem.add),
-    );
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _buildOptionCard(
+                  context,
+                  'Connect Doll to Character',
+                  'Create a new link between a doll and a character',
+                  Icons.link,
+                  Colors.blue,
+                  () {
+                    // Navigate to a page to select a doll first
+                    Navigator.of(context).push(MaterialPageRoute(builder: (context) => const SelectDollPage()));
+                  },
+                ),
+                const SizedBox(height: 20),
+                _buildOptionCard(
+                  context,
+                  'Manage Your Connections',
+                  'View, edit, or remove existing connections',
+                  Icons.list_alt,
+                  Colors.green,
+                  () {
+                    // You can navigate to the 'Your' page or a dedicated management page
+                  },
+                ),
+              ],
+            ),
+          ),
+        ),
+        bottomNavigationBar: const CustomBottomNavBar(currentItem: NavItem.add));
   }
 
-  Widget _buildSelectionCard(BuildContext context, {required String title, required String subtitle, required IconData icon, VoidCallback? onTap}) {
+  Widget _buildOptionCard(BuildContext context, String title, String subtitle, IconData icon, Color color, VoidCallback onTap) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: primaryColor.withOpacity(0.05),
+          color: color.withOpacity(0.1),
           borderRadius: BorderRadius.circular(15),
-          border: Border.all(color: primaryColor.withOpacity(0.2)),
+          border: Border.all(color: color.withOpacity(0.3)),
         ),
         child: Row(
           children: [
-            Icon(icon, size: 40, color: primaryColor),
+            Icon(icon, size: 40, color: color),
             const SizedBox(width: 20),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: primaryColor),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  subtitle,
-                  style: const TextStyle(fontSize: 14, color: Colors.black54),
-                ),
-              ],
-            )
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 5),
+                  Text(subtitle, style: TextStyle(fontSize: 14, color: Colors.grey[700])),
+                ],
+              ),
+            ),
+            const Icon(Icons.arrow_forward_ios, color: Colors.grey),
           ],
         ),
       ),

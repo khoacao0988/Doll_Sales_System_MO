@@ -17,18 +17,34 @@ class CustomBottomNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BottomAppBar(
-      color: Colors.grey[200],
-      elevation: 0,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: <Widget>[
-          _buildNavItem(context, NavItem.home, Icons.home),
-          _buildNavItem(context, NavItem.checklist, Icons.library_add_check),
-          _buildNavItem(context, NavItem.add, Icons.add),
-          _buildNavItem(context, NavItem.library, Icons.pets),
-          _buildNavItem(context, NavItem.profile, Icons.person),
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          colors: [Color(0xFF6A11CB), Color(0xFF2575FC)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black26,
+            blurRadius: 10,
+            offset: Offset(0, -2),
+          ),
         ],
+      ),
+      child: BottomAppBar(
+        color: Colors.transparent,
+        elevation: 0,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: <Widget>[
+            _buildNavItem(context, NavItem.home, Icons.home),
+            _buildNavItem(context, NavItem.checklist, Icons.library_add_check),
+            _buildNavItem(context, NavItem.add, Icons.add),
+            _buildNavItem(context, NavItem.library, Icons.pets),
+            _buildNavItem(context, NavItem.profile, Icons.person),
+          ],
+        ),
       ),
     );
   }
@@ -45,14 +61,14 @@ class CustomBottomNavBar extends StatelessWidget {
           );
         },
         child: CircleAvatar(
-          backgroundColor: isSelected ? Colors.deepPurple : Colors.black,
-          child: const Icon(Icons.add, color: Colors.white),
+          backgroundColor: isSelected ? Colors.white : Colors.white70,
+          child: const Icon(Icons.add, color: Color(0xFF6A11CB)),
         ),
       );
     }
 
     return IconButton(
-      icon: Icon(icon, color: isSelected ? Colors.deepPurple : Colors.black54),
+      icon: Icon(icon, color: isSelected ? Colors.white : Colors.white70, size: isSelected ? 30 : 26),
       onPressed: () {
         if (isSelected) return;
 
