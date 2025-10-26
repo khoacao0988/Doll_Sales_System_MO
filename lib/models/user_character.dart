@@ -1,19 +1,25 @@
 import 'dart:convert';
 
-// Parses a single UserCharacter object from a JSON string
-UserCharacter userCharacterFromJson(String str) => UserCharacter.fromJson(json.decode(str));
+// Parses the nested data object from the single-item API response
+UserCharacter userCharacterFromJson(String str) {
+  final Map<String, dynamic> jsonData = json.decode(str);
+  return UserCharacter.fromJson(jsonData['data']);
+}
 
 class UserCharacter {
     final int userCharacterID;
     final int characterID;
+    final String characterName;
 
     UserCharacter({
         required this.userCharacterID,
         required this.characterID,
+        required this.characterName,
     });
 
     factory UserCharacter.fromJson(Map<String, dynamic> json) => UserCharacter(
         userCharacterID: json["userCharacterID"],
         characterID: json["characterID"],
+        characterName: json["characterName"],
     );
 }

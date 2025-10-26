@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:second/screens/select_character_page.dart';
 import 'package:second/screens/select_doll_page.dart';
 import '../widgets/custom_bottom_nav_bar.dart';
 
@@ -26,34 +25,17 @@ class CreateNewPage extends StatelessWidget {
         ),
         body: Center(
           child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                _buildOptionCard(
-                  context,
-                  'Connect Doll to Character',
-                  'Create a new link between a doll and a character',
-                  Icons.link,
-                  Colors.blue,
-                  () {
-                    // Navigate to a page to select a doll first
-                    Navigator.of(context).push(MaterialPageRoute(builder: (context) => const SelectDollPage()));
-                  },
-                ),
-                const SizedBox(height: 20),
-                _buildOptionCard(
-                  context,
-                  'Manage Your Connections',
-                  'View, edit, or remove existing connections',
-                  Icons.list_alt,
-                  Colors.green,
-                  () {
-                    // You can navigate to the 'Your' page or a dedicated management page
-                  },
-                ),
-              ],
+            padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+            child: _buildOptionCard(
+              context,
+              'Connect Doll to Character',
+              'Create a new link between one of your available dolls and a character.',
+              Icons.link_rounded,
+              Colors.blue,
+              () {
+                // Navigate to the page to select an available doll
+                Navigator.of(context).push(MaterialPageRoute(builder: (context) => const SelectDollPage()));
+              },
             ),
           ),
         ),
@@ -64,27 +46,31 @@ class CreateNewPage extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(15),
-          border: Border.all(color: color.withOpacity(0.3)),
+          gradient: LinearGradient(
+            colors: [color.withOpacity(0.8), color],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: color.withOpacity(0.4),
+              blurRadius: 10,
+              spreadRadius: 2,
+              offset: const Offset(0, 4),
+            )
+          ]
         ),
-        child: Row(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, size: 40, color: color),
-            const SizedBox(width: 20),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 5),
-                  Text(subtitle, style: TextStyle(fontSize: 14, color: Colors.grey[700])),
-                ],
-              ),
-            ),
-            const Icon(Icons.arrow_forward_ios, color: Colors.grey),
+            Icon(icon, size: 50, color: Colors.white),
+            const SizedBox(height: 16),
+            Text(title, textAlign: TextAlign.center, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white)),
+            const SizedBox(height: 8),
+            Text(subtitle, textAlign: TextAlign.center, style: TextStyle(fontSize: 14, color: Colors.white.withOpacity(0.9))),
           ],
         ),
       ),

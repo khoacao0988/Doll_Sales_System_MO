@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../services/session_service.dart'; // Import session service
+import '../services/session_service.dart';
 import 'profile_page.dart';
 import 'library_page.dart';
 import 'your_page.dart';
@@ -44,6 +44,7 @@ class HomePage extends StatelessWidget {
       body: SingleChildScrollView(
         child: Column(
           children: [
+            // Reverted to a single, static image
             SizedBox(
               height: 200,
               width: double.infinity,
@@ -77,21 +78,13 @@ class HomePage extends StatelessWidget {
     return GestureDetector(
       onTap: () {
         if (title == 'Profile') {
-          Navigator.of(context).push(MaterialPageRoute(
-            builder: (context) => const ProfilePage(),
-          ));
+          Navigator.of(context).push(MaterialPageRoute(builder: (context) => const ProfilePage()));
         } else if (title == 'Library') {
-          Navigator.of(context).push(MaterialPageRoute(
-            builder: (context) => const LibraryPage(),
-          ));
+          Navigator.of(context).push(MaterialPageRoute(builder: (context) => const LibraryPage()));
         } else if (title == 'Your') {
-          Navigator.of(context).push(MaterialPageRoute(
-            builder: (context) => const YourPage(),
-          ));
+          Navigator.of(context).push(MaterialPageRoute(builder: (context) => const YourPage()));
         } else if (title == 'Create new') {
-          Navigator.of(context).push(MaterialPageRoute(
-            builder: (context) => const CreateNewPage(),
-          ));
+          Navigator.of(context).push(MaterialPageRoute(builder: (context) => const CreateNewPage()));
         }
       },
       child: Container(
@@ -99,19 +92,11 @@ class HomePage extends StatelessWidget {
           color: color,
           borderRadius: BorderRadius.circular(20),
            boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.2),
-              spreadRadius: 1,
-              blurRadius: 5,
-              offset: const Offset(0, 3),
-            ),
+            BoxShadow(color: Colors.black.withOpacity(0.2), spreadRadius: 1, blurRadius: 5, offset: const Offset(0, 3)),
           ],
         ),
         child: Center(
-          child: Text(
-            title,
-            style: const TextStyle(fontSize: 22, color: Colors.white, fontWeight: FontWeight.bold),
-          ),
+          child: Text(title, style: const TextStyle(fontSize: 22, color: Colors.white, fontWeight: FontWeight.bold)),
         ),
       ),
     );
