@@ -11,29 +11,31 @@ class HomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // CORRECT WAY: Get user data from the session service when needed
     final userName = SessionService().user?.userName ?? 'User';
 
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Colors.transparent,
         elevation: 0,
-        leading: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Container(
-            color: Colors.grey[300],
-            child: const Center(child: Text('Logo web', style: TextStyle(fontSize: 10, color: Colors.black54))),
+        automaticallyImplyLeading: false,
+        title: const Text('Home', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        flexibleSpace: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Color(0xFF6A11CB), Color(0xFF2575FC)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
           ),
         ),
         actions: [
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: CircleAvatar(
-              backgroundColor: Colors.indigo[100],
+              backgroundColor: Colors.white,
               child: Text(
-                // Use the first letter of the username from the session
                 userName.isNotEmpty ? userName.substring(0, 1).toUpperCase() : 'U',
-                style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.indigo),
+                style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF6A11CB)),
               ),
             ),
           )
@@ -74,7 +76,6 @@ class HomePage extends StatelessWidget {
   Widget _buildMenuCard(BuildContext context, String title, Color color) {
     return GestureDetector(
       onTap: () {
-        // CORRECT WAY: Navigate to pages without passing any arguments
         if (title == 'Profile') {
           Navigator.of(context).push(MaterialPageRoute(
             builder: (context) => const ProfilePage(),

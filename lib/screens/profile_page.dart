@@ -14,96 +14,119 @@ class ProfilePage extends StatelessWidget {
 
     if (user == null) {
       return const Scaffold(
-        body: Center(
-          child: Text('Error: User not logged in.'),
-        ),
+        body: Center(child: Text('Error: User not logged in.')),
       );
     }
 
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text('My Profile', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.white,
+        title: const Text('My Profile', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        backgroundColor: Colors.transparent,
         elevation: 0,
         automaticallyImplyLeading: false,
+        flexibleSpace: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Color(0xFF6A11CB), Color(0xFF2575FC)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+        ),
       ),
       body: ListView(
         padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 10.0),
         children: <Widget>[
           const SizedBox(height: 20),
-          Center(
-            child: Stack(
-              children: [
-                CircleAvatar(
-                  radius: 70,
-                  backgroundColor: const Color(0xFF3F51B5).withOpacity(0.1),
-                  child: CircleAvatar(
-                    radius: 65,
-                    child: Text(user.userName.substring(0, 1).toUpperCase(), style: const TextStyle(fontSize: 50, fontWeight: FontWeight.bold, color: Colors.indigo)),
-                  ),
-                ),
-                Positioned(
-                  bottom: 0,
-                  right: 0,
-                  child: CircleAvatar(
-                    radius: 20,
-                    backgroundColor: Colors.white,
-                    child: Icon(Icons.camera_alt, color: const Color(0xFF3F51B5), size: 22),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 50),
-          _buildInfoField(context, 'Username', user.userName, Icons.person_outline),
-          const SizedBox(height: 16),
-          _buildInfoField(context, 'Email', user.email, Icons.email_outlined),
-          const SizedBox(height: 16),
-          _buildInfoField(context, 'Role', user.role, Icons.security_outlined),
-          const SizedBox(height: 40),
-          ElevatedButton.icon(
-            icon: const Icon(Icons.edit_outlined, size: 20),
-            label: const Text('Edit Profile'),
-            onPressed: () {
-              Navigator.of(context).push(MaterialPageRoute(builder: (context) => const EditProfilePage()));
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF3F51B5),
-              foregroundColor: Colors.white,
-              elevation: 2,
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
-          OutlinedButton.icon(
-             icon: const Icon(Icons.logout, size: 20, color: Colors.redAccent),
-            label: const Text('Logout', style: TextStyle(color: Colors.redAccent)),
-            onPressed: () {
-              SessionService().clearSession();
-              Navigator.of(context).pushAndRemoveUntil(
-                MaterialPageRoute(builder: (context) => const LoginPage()),
-                (Route<dynamic> route) => false,
-              );
-            },
-             style: OutlinedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              side: BorderSide(color: Colors.red.shade100),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-          ),
+          _buildProfileHeader(user),
+          const SizedBox(height: 30),
+          _buildInfoSection(user),
+          const SizedBox(height: 30),
+          _buildActionButtons(context),
         ],
       ),
       bottomNavigationBar: const CustomBottomNavBar(currentItem: NavItem.profile),
     );
   }
 
-  Widget _buildInfoField(BuildContext context, String label, String value, IconData icon) {
+  Widget _buildProfileHeader(User user) {
+    return Center(
+      child: Stack(
+        children: [
+          CircleAvatar(
+            radius: 70,
+            backgroundColor: const Color(0xFF3F51B5).withOpacity(0.1),
+            child: CircleAvatar(
+              radius: 65,
+              child: Text(user.userName.substring(0, 1).toUpperCase(), style: const TextStyle(fontSize: 50, fontWeight: FontWeight.bold, color: Colors.indigo)),
+            ),
+          ),
+          Positioned(
+            bottom: 0,
+            right: 0,
+            child: CircleAvatar(
+              radius: 20,
+              backgroundColor: Colors.white,
+              child: Icon(Icons.camera_alt, color: const Color(0xFF3F51B5), size: 22),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInfoSection(User user) {
+    return Column(
+      children: [
+        _buildInfoField('Username', user.userName, Icons.person_outline),
+        const SizedBox(height: 16),
+        _buildInfoField('Email', user.email, Icons.email_outlined),
+        const SizedBox(height: 16),
+        _buildInfoField('Role', user.role, Icons.security_outlined),
+      ],
+    );
+  }
+
+  Widget _buildActionButtons(BuildContext context) {
+    return Column(
+      children: [
+        ElevatedButton.icon(
+          icon: const Icon(Icons.edit_outlined, size: 20),
+          label: const Text('Edit Profile'),
+          onPressed: () {
+            Navigator.of(context).push(MaterialPageRoute(builder: (context) => const EditProfilePage()));
+          },
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFF3F51B5),
+            foregroundColor: Colors.white,
+            elevation: 2,
+            padding: const EdgeInsets.symmetric(vertical: 14),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+        ),
+        const SizedBox(height: 16),
+        OutlinedButton.icon(
+          icon: const Icon(Icons.logout, size: 20, color: Colors.redAccent),
+          label: const Text('Logout', style: TextStyle(color: Colors.redAccent)),
+          onPressed: () {
+            SessionService().clearSession();
+            Navigator.of(context).pushAndRemoveUntil(
+              MaterialPageRoute(builder: (context) => const LoginPage()),
+              (Route<dynamic> route) => false,
+            );
+          },
+          style: OutlinedButton.styleFrom(
+            padding: const EdgeInsets.symmetric(vertical: 14),
+            side: BorderSide(color: Colors.red.shade100),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildInfoField(String label, String value, IconData icon) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
@@ -118,15 +141,9 @@ class ProfilePage extends StatelessWidget {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                label,
-                style: TextStyle(color: Colors.grey[500], fontSize: 12),
-              ),
+              Text(label, style: TextStyle(color: Colors.grey[500], fontSize: 12)),
               const SizedBox(height: 2),
-              Text(
-                value,
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-              ),
+              Text(value, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
             ],
           ),
         ],
