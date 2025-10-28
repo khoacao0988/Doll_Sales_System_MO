@@ -31,6 +31,45 @@ class _EditProfilePageState extends State<EditProfilePage> {
     super.dispose();
   }
 
+  Future<void> _saveChanges() async {
+    final bool? confirm = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Confirm Changes'),
+          content: const Text('Are you sure you want to save these changes?'),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Cancel'),
+              onPressed: () => Navigator.of(context).pop(false),
+            ),
+            TextButton(
+              child: const Text('Save', style: TextStyle(color: Colors.blue)),
+              onPressed: () => Navigator.of(context).pop(true),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirm == true) {
+      // TODO: Implement the API call to update the user profile.
+      // For now, we just pop the screen.
+      
+      // Example of what the API call might look like:
+      // final updatedEmail = _emailController.text;
+      // final updatedPhone = _phonesController.text;
+      // await authService.updateUserProfile(updatedEmail, updatedPhone);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Profile changes saved (simulation).'), backgroundColor: Colors.green),
+        );
+        Navigator.of(context).pop();
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -56,17 +95,17 @@ class _EditProfilePageState extends State<EditProfilePage> {
         padding: const EdgeInsets.all(24.0),
         children: [
           const SizedBox(height: 20),
-          _buildTextField(_usernameController, 'Username', Icons.person_outline),
+          // Username field (read-only)
+          _buildTextField(_usernameController, 'Username', Icons.person_outline, readOnly: true),
           const SizedBox(height: 16),
+          // Email field (editable)
           _buildTextField(_emailController, 'Email', Icons.email_outlined),
           const SizedBox(height: 16),
+          // Phone Number field (editable)
           _buildTextField(_phonesController, 'Phone Number', Icons.phone_outlined),
           const SizedBox(height: 40),
           ElevatedButton(
-            onPressed: () {
-              // TODO: Implement save logic
-              Navigator.of(context).pop();
-            },
+            onPressed: _saveChanges,
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF3F51B5),
               foregroundColor: Colors.white,
@@ -82,9 +121,10 @@ class _EditProfilePageState extends State<EditProfilePage> {
     );
   }
 
-  Widget _buildTextField(TextEditingController controller, String label, IconData icon) {
+  Widget _buildTextField(TextEditingController controller, String label, IconData icon, {bool readOnly = false}) {
     return TextField(
       controller: controller,
+      readOnly: readOnly,
       decoration: InputDecoration(
         labelText: label,
         prefixIcon: Icon(icon, color: const Color(0xFF3F51B5)),
@@ -92,7 +132,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
           borderRadius: BorderRadius.circular(12),
         ),
         filled: true,
-        fillColor: Colors.grey[50],
+        // Make read-only fields visually distinct
+        fillColor: readOnly ? Colors.grey[200] : Colors.grey[50],
       ),
     );
   }

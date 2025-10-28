@@ -18,12 +18,14 @@ class OwnedDoll {
     final int userId;
     final int dollVariantId;
     final String dollVariantName;
+    final String serialCode; // Added serialCode
 
     OwnedDoll({
         required this.ownedDollId,
         required this.userId,
         required this.dollVariantId,
         required this.dollVariantName,
+        required this.serialCode, // Added to constructor
     });
 
     factory OwnedDoll.fromJson(Map<String, dynamic> json) => OwnedDoll(
@@ -31,5 +33,6 @@ class OwnedDoll {
         userId: json["userID"],
         dollVariantId: json["dollVariantID"],
         dollVariantName: json["dollVariantName"],
+        serialCode: json["serialCode"] ?? '', // Added with a fallback
     );
 }
