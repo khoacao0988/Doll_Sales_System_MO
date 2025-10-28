@@ -88,38 +88,43 @@ class ProfilePage extends StatelessWidget {
     );
   }
 
+  // CORRECTED: This now uses a Row to place buttons side-by-side.
   Widget _buildActionButtons(BuildContext context) {
-    return Column(
+    return Row(
       children: [
-        ElevatedButton.icon(
-          icon: const Icon(Icons.edit_outlined, size: 20),
-          label: const Text('Edit Profile'),
-          onPressed: () {
-            Navigator.of(context).push(MaterialPageRoute(builder: (context) => const EditProfilePage()));
-          },
-          style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFF3F51B5),
-            foregroundColor: Colors.white,
-            elevation: 2,
-            padding: const EdgeInsets.symmetric(vertical: 14),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        Expanded(
+          child: ElevatedButton.icon(
+            icon: const Icon(Icons.edit_outlined, size: 20),
+            label: const Text('Edit Profile'),
+            onPressed: () {
+              Navigator.of(context).push(MaterialPageRoute(builder: (context) => const EditProfilePage()));
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF3F51B5),
+              foregroundColor: Colors.white,
+              elevation: 2,
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
           ),
         ),
-        const SizedBox(height: 16),
-        OutlinedButton.icon(
-          icon: const Icon(Icons.logout, size: 20, color: Colors.redAccent),
-          label: const Text('Logout', style: TextStyle(color: Colors.redAccent)),
-          onPressed: () {
-            SessionService().clearSession();
-            Navigator.of(context).pushAndRemoveUntil(
-              MaterialPageRoute(builder: (context) => const LoginPage()),
-              (Route<dynamic> route) => false,
-            );
-          },
-          style: OutlinedButton.styleFrom(
-            padding: const EdgeInsets.symmetric(vertical: 14),
-            side: BorderSide(color: Colors.red.shade100),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        const SizedBox(width: 16),
+        Expanded(
+          child: OutlinedButton.icon(
+            icon: const Icon(Icons.logout, size: 20, color: Colors.redAccent),
+            label: const Text('Logout', style: TextStyle(color: Colors.redAccent)),
+            onPressed: () {
+              SessionService().clearSession();
+              Navigator.of(context).pushAndRemoveUntil(
+                MaterialPageRoute(builder: (context) => const LoginPage()),
+                (Route<dynamic> route) => false,
+              );
+            },
+            style: OutlinedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              side: BorderSide(color: Colors.red.shade100),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
           ),
         ),
       ],

@@ -20,6 +20,10 @@ class _LibraryPageState extends State<LibraryPage> {
   late Future<List<DollVariant>> _detailedDollsFuture;
   final AuthService _authService = AuthService();
 
+  // For Search functionality
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+
   final User? _user = SessionService().user;
   final AuthResponse? _authResponse = SessionService().authResponse;
 
@@ -28,29 +32,33 @@ class _LibraryPageState extends State<LibraryPage> {
     super.initState();
     _detailedCharactersFuture = _fetchCharacterDetails();
     _detailedDollsFuture = _fetchDollDetails();
+
+    _searchController.addListener(() {
+      setState(() {
+        _searchQuery = _searchController.text;
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   Future<List<Character>> _fetchCharacterDetails() async {
-    if (_user == null || _authResponse == null) {
-      throw Exception('User not authenticated.');
-    }
+    if (_user == null || _authResponse == null) throw Exception('User not authenticated.');
     final ownedCharacters = await _authService.getOwnedCharacters(_user!.userID, _authResponse!.accessToken);
     if (ownedCharacters.isEmpty) return [];
-    final detailFutures = ownedCharacters.map((owned) {
-      return _authService.getCharacterDetails(owned.characterId, _authResponse!.accessToken);
-    }).toList();
+    final detailFutures = ownedCharacters.map((owned) => _authService.getCharacterDetails(owned.characterId, _authResponse!.accessToken));
     return await Future.wait(detailFutures);
   }
 
   Future<List<DollVariant>> _fetchDollDetails() async {
-    if (_user == null || _authResponse == null) {
-      throw Exception('User not authenticated.');
-    }
+    if (_user == null || _authResponse == null) throw Exception('User not authenticated.');
     final ownedDolls = await _authService.getOwnedDolls(_user!.userID, _authResponse!.accessToken);
     if (ownedDolls.isEmpty) return [];
-    final detailFutures = ownedDolls.map((owned) {
-      return _authService.getDollVariantDetails(owned.dollVariantId, _authResponse!.accessToken);
-    }).toList();
+    final detailFutures = ownedDolls.map((owned) => _authService.getDollVariantDetails(owned.dollVariantId, _authResponse!.accessToken));
     return await Future.wait(detailFutures);
   }
 
@@ -66,13 +74,7 @@ class _LibraryPageState extends State<LibraryPage> {
         elevation: 0,
         automaticallyImplyLeading: false,
         flexibleSpace: Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              colors: [Color(0xFF6A11CB), Color(0xFF2575FC)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-          ),
+          decoration: const BoxDecoration(gradient: LinearGradient(colors: [Color(0xFF6A11CB), Color(0xFF2575FC)], begin: Alignment.topLeft, end: Alignment.bottomRight)),
         ),
       ),
       body: SingleChildScrollView(
@@ -82,24 +84,19 @@ class _LibraryPageState extends State<LibraryPage> {
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 8.0),
               child: TextField(
+                controller: _searchController,
                 decoration: InputDecoration(
                   hintText: 'Search in Library...',
                   prefixIcon: const Icon(Icons.search, color: primaryColor),
                   filled: true,
                   fillColor: primaryColor.withOpacity(0.05),
-                  border: const OutlineInputBorder(
-                    borderRadius: BorderRadius.all(Radius.circular(12.0)),
-                    borderSide: BorderSide.none,
-                  ),
+                  border: const OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12.0)), borderSide: BorderSide.none),
                 ),
               ),
             ),
             const SizedBox(height: 16),
             Container(
-              decoration: BoxDecoration(
-                color: primaryColor.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(12),
-              ),
+              decoration: BoxDecoration(color: primaryColor.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
               child: Row(
                 children: [
                   Expanded(child: _buildToggleButton(context, 'Dolls', _showDolls, primaryColor)),
@@ -108,9 +105,7 @@ class _LibraryPageState extends State<LibraryPage> {
               ),
             ),
             const SizedBox(height: 20),
-            _showDolls
-                ? _buildDollsGrid()
-                : _buildCharactersGrid(),
+            _showDolls ? _buildDollsGrid() : _buildCharactersGrid(),
           ],
         ),
       ),
@@ -129,19 +124,22 @@ class _LibraryPageState extends State<LibraryPage> {
         } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
           return const Center(child: Text('No characters found.'));
         } else {
-          final characters = snapshot.data!;
+          // Filter the list based on the search query
+          final filteredCharacters = snapshot.data!.where((character) {
+            return character.name.toLowerCase().contains(_searchQuery.toLowerCase());
+          }).toList();
+
+          if (filteredCharacters.isEmpty) {
+            return const Center(child: Text('No matching characters found.'));
+          }
+
           return GridView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              crossAxisSpacing: 16,
-              mainAxisSpacing: 16,
-              childAspectRatio: 0.8,
-            ),
-            itemCount: characters.length,
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2, crossAxisSpacing: 16, mainAxisSpacing: 16, childAspectRatio: 0.8),
+            itemCount: filteredCharacters.length,
             itemBuilder: (context, index) {
-              final character = characters[index];
+              final character = filteredCharacters[index];
               return _buildGridItem(character.name, character.image, false, const Color(0xFF4CAF50));
             },
           );
@@ -161,19 +159,22 @@ class _LibraryPageState extends State<LibraryPage> {
         } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
           return const Center(child: Text('No dolls found.'));
         } else {
-          final dolls = snapshot.data!;
+          // Filter the list based on the search query
+          final filteredDolls = snapshot.data!.where((doll) {
+            return doll.name.toLowerCase().contains(_searchQuery.toLowerCase());
+          }).toList();
+
+          if (filteredDolls.isEmpty) {
+            return const Center(child: Text('No matching dolls found.'));
+          }
+
           return GridView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              crossAxisSpacing: 16,
-              mainAxisSpacing: 16,
-              childAspectRatio: 0.8,
-            ),
-            itemCount: dolls.length,
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2, crossAxisSpacing: 16, mainAxisSpacing: 16, childAspectRatio: 0.8),
+            itemCount: filteredDolls.length,
             itemBuilder: (context, index) {
-              final doll = dolls[index];
+              final doll = filteredDolls[index];
               return _buildGridItem(doll.name, doll.image, false, const Color(0xFF4CAF50));
             },
           );
@@ -185,25 +186,12 @@ class _LibraryPageState extends State<LibraryPage> {
   Widget _buildToggleButton(BuildContext context, String text, bool isSelected, Color color) {
     return GestureDetector(
       onTap: () {
-        setState(() {
-          _showDolls = text == 'Dolls';
-        });
+        setState(() { _showDolls = text == 'Dolls'; });
       },
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 12),
-        decoration: BoxDecoration(
-          color: isSelected ? color : Colors.transparent,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Center(
-          child: Text(
-            text,
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              color: isSelected ? Colors.white : color,
-            ),
-          ),
-        ),
+        decoration: BoxDecoration(color: isSelected ? color : Colors.transparent, borderRadius: BorderRadius.circular(12)),
+        child: Center(child: Text(text, style: TextStyle(fontWeight: FontWeight.bold, color: isSelected ? Colors.white : color))),
       ),
     );
   }
@@ -214,14 +202,7 @@ class _LibraryPageState extends State<LibraryPage> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Colors.grey.shade200),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
-            spreadRadius: 1,
-            blurRadius: 5,
-            offset: const Offset(0, 2),
-          )
-        ],
+        boxShadow: [BoxShadow(color: Colors.grey.withOpacity(0.1), spreadRadius: 1, blurRadius: 5, offset: const Offset(0, 2))]
       ),
       child: Padding(
         padding: const EdgeInsets.all(8.0),
@@ -233,21 +214,12 @@ class _LibraryPageState extends State<LibraryPage> {
                 decoration: BoxDecoration(
                   color: Colors.grey[100],
                   borderRadius: BorderRadius.circular(8),
-                  image: DecorationImage(
-                    image: NetworkImage(imageUrl ?? 'https://placekitten.com/200/200'),
-                    fit: BoxFit.cover,
-                  ),
+                  image: DecorationImage(image: NetworkImage(imageUrl ?? 'https://placekitten.com/200/200'), fit: BoxFit.cover),
                 ),
               ),
             ),
             const SizedBox(height: 8),
-            Text(
-              name,
-              style: const TextStyle(fontWeight: FontWeight.bold),
-              textAlign: TextAlign.center,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
+            Text(name, style: const TextStyle(fontWeight: FontWeight.bold), textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis),
           ],
         ),
       ),

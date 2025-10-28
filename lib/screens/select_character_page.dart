@@ -91,8 +91,6 @@ class _SelectCharacterPageState extends State<SelectCharacterPage> {
 
   @override
   Widget build(BuildContext context) {
-    const Color primaryColor = Color(0xFF009688); // Teal
-
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -114,70 +112,47 @@ class _SelectCharacterPageState extends State<SelectCharacterPage> {
         ),
       ),
       body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16.0),
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8.0),
-              child: TextField(
-                decoration: InputDecoration(
-                  hintText: 'Search for a character...',
-                  prefixIcon: const Icon(Icons.search, color: primaryColor),
-                  filled: true,
-                  fillColor: primaryColor.withOpacity(0.05),
-                  border: const OutlineInputBorder(
-                    borderRadius: BorderRadius.all(Radius.circular(12.0)),
-                    borderSide: BorderSide.none,
-                  ),
+        padding: const EdgeInsets.all(16.0),
+        child: FutureBuilder<List<AvailableCharacterInfo>>(
+          future: _availableCharactersFuture,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            } else if (snapshot.hasError) {
+              return Center(child: Text('Error: ${snapshot.error}'));
+            } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+              return const Center(child: Text('No available characters found.'));
+            } else {
+              final availableCharacters = snapshot.data!;
+              return GridView.builder(
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  crossAxisSpacing: 16,
+                  mainAxisSpacing: 16,
+                  childAspectRatio: 0.75,
                 ),
-              ),
-            ),
-            const SizedBox(height: 20),
-            Expanded(
-              child: FutureBuilder<List<AvailableCharacterInfo>>(
-                future: _availableCharactersFuture,
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(child: CircularProgressIndicator());
-                  } else if (snapshot.hasError) {
-                    return Center(child: Text('Error: ${snapshot.error}'));
-                  } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                    return const Center(child: Text('No available characters found.'));
-                  } else {
-                    final availableCharacters = snapshot.data!;
-                    return GridView.builder(
-                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
-                        crossAxisSpacing: 16,
-                        mainAxisSpacing: 16,
-                        childAspectRatio: 0.75,
-                      ),
-                      itemCount: availableCharacters.length,
-                      itemBuilder: (context, index) {
-                        final charInfo = availableCharacters[index];
-                        return _buildGridItem(context, charInfo, primaryColor);
-                      },
-                    );
-                  }
+                itemCount: availableCharacters.length,
+                itemBuilder: (context, index) {
+                  final charInfo = availableCharacters[index];
+                  return _buildGridItem(context, charInfo);
                 },
-              ),
-            ),
-          ],
+              );
+            }
+          },
         ),
       ),
     );
   }
 
-  Widget _buildGridItem(BuildContext context, AvailableCharacterInfo info, Color color) {
+  Widget _buildGridItem(BuildContext context, AvailableCharacterInfo info) {
     return GestureDetector(
       onTap: () => _connect(info.userCharacterId),
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.grey.shade200),
-          boxShadow: [BoxShadow(color: Colors.grey.withOpacity(0.1), spreadRadius: 1, blurRadius: 5, offset: const Offset(0, 2))]
-        ),
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.grey.shade200),
+            boxShadow: [BoxShadow(color: Colors.grey.withOpacity(0.1), spreadRadius: 1, blurRadius: 5, offset: const Offset(0, 2))]),
         child: Padding(
           padding: const EdgeInsets.all(8.0),
           child: Column(

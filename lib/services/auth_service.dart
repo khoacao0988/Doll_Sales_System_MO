@@ -88,12 +88,10 @@ class AuthService {
     }
   }
 
-  // CORRECTED: This method now assumes the API returns a nested object { "data": [...] }
   Future<List<DollVariant>> getAllDollVariants(String token) async {
     final response = await http.get(Uri.parse('$_baseUrl/api/DollVariant'), headers: {'Authorization': 'Bearer $token'}).timeout(_timeout);
     if (response.statusCode == 200) {
-      final Map<String, dynamic> jsonData = json.decode(response.body);
-      final List<dynamic> dollList = jsonData['data'] ?? [];
+      final List<dynamic> dollList = json.decode(response.body);
       return List<DollVariant>.from(dollList.map((x) => DollVariant.fromJson(x)));
     } else {
       throw Exception('Failed to load all doll variants. Status code: ${response.statusCode}');
@@ -117,6 +115,16 @@ class AuthService {
       return singleOwnedDollFromJson(response.body);
     } else {
       throw Exception('Failed to load owned doll. Status code: ${response.statusCode}');
+    }
+  }
+  
+  // New method to find an owned doll by its serial code
+  Future<OwnedDoll> getOwnedDollBySerial(String serialCode, String token) async {
+    final response = await http.get(Uri.parse('$_baseUrl/api/OwnedDoll/serial/$serialCode'), headers: {'Authorization': 'Bearer $token'}).timeout(_timeout);
+    if (response.statusCode == 200) {
+      return singleOwnedDollFromJson(response.body);
+    } else {
+      throw Exception('Failed to find doll by serial code. Status code: ${response.statusCode}');
     }
   }
 

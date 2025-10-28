@@ -67,8 +67,6 @@ class _SelectDollPageState extends State<SelectDollPage> {
 
   @override
   Widget build(BuildContext context) {
-    const Color primaryColor = Color(0xFF9C27B0); // Purple
-
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -90,61 +88,39 @@ class _SelectDollPageState extends State<SelectDollPage> {
         ),
       ),
       body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16.0),
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8.0),
-              child: TextField(
-                decoration: InputDecoration(
-                  hintText: 'Search for a doll...',
-                  prefixIcon: const Icon(Icons.search, color: primaryColor),
-                  filled: true,
-                  fillColor: primaryColor.withOpacity(0.05),
-                  border: const OutlineInputBorder(
-                    borderRadius: BorderRadius.all(Radius.circular(12.0)),
-                    borderSide: BorderSide.none,
-                  ),
+        padding: const EdgeInsets.all(16.0),
+        child: FutureBuilder<List<AvailableDollInfo>>(
+          future: _availableDollsFuture,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            } else if (snapshot.hasError) {
+              return Center(child: Text('Error: ${snapshot.error}'));
+            } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+              return const Center(child: Text('No available dolls found.'));
+            } else {
+              final availableDolls = snapshot.data!;
+              return GridView.builder(
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  crossAxisSpacing: 16,
+                  mainAxisSpacing: 16,
+                  childAspectRatio: 0.75,
                 ),
-              ),
-            ),
-            const SizedBox(height: 20),
-            Expanded(
-              child: FutureBuilder<List<AvailableDollInfo>>(
-                future: _availableDollsFuture,
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(child: CircularProgressIndicator());
-                  } else if (snapshot.hasError) {
-                    return Center(child: Text('Error: ${snapshot.error}'));
-                  } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                    return const Center(child: Text('No available dolls found.'));
-                  } else {
-                    final availableDolls = snapshot.data!;
-                    return GridView.builder(
-                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
-                        crossAxisSpacing: 16,
-                        mainAxisSpacing: 16,
-                        childAspectRatio: 0.75, // Adjusted for more content
-                      ),
-                      itemCount: availableDolls.length,
-                      itemBuilder: (context, index) {
-                        final dollInfo = availableDolls[index];
-                        return _buildGridItem(context, dollInfo, primaryColor);
-                      },
-                    );
-                  }
+                itemCount: availableDolls.length,
+                itemBuilder: (context, index) {
+                  final dollInfo = availableDolls[index];
+                  return _buildGridItem(context, dollInfo);
                 },
-              ),
-            ),
-          ],
+              );
+            }
+          },
         ),
       ),
     );
   }
 
-  Widget _buildGridItem(BuildContext context, AvailableDollInfo info, Color color) {
+  Widget _buildGridItem(BuildContext context, AvailableDollInfo info) {
     return GestureDetector(
       onTap: () {
         // Navigate to the next step, passing the chosen ownedDollID
