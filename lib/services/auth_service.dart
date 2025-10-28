@@ -11,8 +11,10 @@ import '../models/user.dart';
 import '../models/user_character.dart';
 
 class AuthService {
+  //static const String _baseUrl = 'https://dollaistore-api-dxdggjazgpckh2cc.japaneast-01.azurewebsites.net';
   static const String _baseUrl = 'https://10.0.2.2:7152';
-  static const Duration _timeout = Duration(seconds: 10);
+  // Increased timeout to 30 seconds to handle slow server responses
+  static const Duration _timeout = Duration(seconds: 30);
 
   Future<AuthResponse> login(String username, String password) async {
     final response = await http.post(
@@ -118,7 +120,6 @@ class AuthService {
     }
   }
   
-  // New method to find an owned doll by its serial code
   Future<OwnedDoll> getOwnedDollBySerial(String serialCode, String token) async {
     final response = await http.get(Uri.parse('$_baseUrl/api/OwnedDoll/serial/$serialCode'), headers: {'Authorization': 'Bearer $token'}).timeout(_timeout);
     if (response.statusCode == 200) {
