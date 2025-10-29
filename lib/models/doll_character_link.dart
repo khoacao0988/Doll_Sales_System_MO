@@ -16,8 +16,8 @@ class DollCharacterLink {
   final int ownedDollID;
   final int userCharacterID;
   final String characterName;
-  final String status;
-  final bool isActive; // Added isActive field
+  final int status; // CORRECTED: Changed type from String to int
+  final bool isActive;
 
   DollCharacterLink({
     required this.linkID,
@@ -25,7 +25,7 @@ class DollCharacterLink {
     required this.userCharacterID,
     required this.characterName,
     required this.status,
-    required this.isActive, // Added to constructor
+    required this.isActive,
   });
 
   // This factory parses the object inside the 'data' array.
@@ -34,7 +34,7 @@ class DollCharacterLink {
     ownedDollID: json["ownedDollID"],
     userCharacterID: json["userCharacterID"],
     characterName: json["characterName"],
-    status: json["status"],
-    isActive: json["isActive"] ?? false, // Added isActive field with a fallback
+    status: json["status"], // Reads the int status
+    isActive: json["isActive"] ?? false,
   );
 }
