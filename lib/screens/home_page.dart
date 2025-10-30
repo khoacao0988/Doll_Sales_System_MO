@@ -38,15 +38,13 @@ class _HomePageState extends State<HomePage> {
   }
 
   void _startTimer(int pageCount) {
+    if (pageCount <= 1) return; // Don't start timer if there's only one or zero images
+
     _timer = Timer.periodic(const Duration(seconds: 3), (Timer timer) {
-      if (_currentPage < pageCount - 1) {
-        _currentPage++;
-      } else {
-        _currentPage = 0;
-      }
+      int nextPage = (_currentPage + 1) % pageCount;
       if (_pageController.hasClients) {
         _pageController.animateToPage(
-          _currentPage,
+          nextPage,
           duration: const Duration(milliseconds: 400),
           curve: Curves.easeIn,
         );
@@ -55,16 +53,21 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<List<String>> _fetchImages() async {
-    final AuthResponse? auth = SessionService().authResponse;
-    if (auth == null) throw Exception('Not authenticated');
+    try {
+      final AuthResponse? auth = SessionService().authResponse;
+      if (auth == null) throw Exception('Not authenticated');
 
-    final allVariants = await _authService.getAllDollVariants(auth.accessToken);
-    final images = allVariants.map((v) => v.image).where((img) => img != null && img.isNotEmpty).cast<String>().toList();
-    
-    if (images.isNotEmpty) {
-      _startTimer(images.length);
+      final allVariants = await _authService.getAllDollVariants(auth.accessToken);
+      final images = allVariants.map((v) => v.image).where((img) => img != null && img.isNotEmpty).cast<String>().toList();
+      
+      if (mounted) {
+        _startTimer(images.length);
+      }
+      return images;
+    } catch (e) {
+      print('Failed to fetch images: $e');
+      return []; // Return empty list on error to show the default image
     }
-    return images;
   }
 
   @override
@@ -82,15 +85,16 @@ class _HomePageState extends State<HomePage> {
           Padding(padding: const EdgeInsets.only(right: 12.0, left: 8.0), child: CircleAvatar(backgroundColor: Colors.white, child: Text(userName.isNotEmpty ? userName.substring(0, 1).toUpperCase() : 'U', style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF6A11CB))))),
         ],
       ),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            _buildImageCarousel(),
-            GridView.count(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
+      // CORRECTED: Using CustomScrollView with Slivers for better performance and layout structure.
+      body: CustomScrollView(
+        slivers: [
+          SliverToBoxAdapter(
+            child: _buildImageCarousel(),
+          ),
+          SliverPadding(
+            padding: const EdgeInsets.all(20),
+            sliver: SliverGrid.count(
               crossAxisCount: 2,
-              padding: const EdgeInsets.all(20),
               crossAxisSpacing: 20,
               mainAxisSpacing: 20,
               children: <Widget>[
@@ -100,8 +104,8 @@ class _HomePageState extends State<HomePage> {
                 _buildMenuCard(context, 'Profile', const Color(0xFFFF9800)),
               ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
       bottomNavigationBar: const CustomBottomNavBar(currentItem: NavItem.home), 
     );
@@ -119,13 +123,16 @@ class _HomePageState extends State<HomePage> {
         }
 
         final images = snapshot.data!;
-        // Removed the Stack and the Positioned widget for the dots
         return SizedBox(
           height: 200.0,
           child: PageView.builder(
             controller: _pageController,
             itemCount: images.length,
-            onPageChanged: (int page) => setState(() => _currentPage = page),
+            onPageChanged: (int page) {
+              setState(() {
+                _currentPage = page;
+              });
+            },
             itemBuilder: (context, index) => Image.network(images[index], fit: BoxFit.cover, width: double.infinity),
           ),
         );
