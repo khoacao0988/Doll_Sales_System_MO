@@ -140,11 +140,37 @@ class AuthService {
   }
   
   Future<OwnedDoll> getOwnedDollBySerial(String serialCode, String token) async {
-    final response = await http.get(Uri.parse('$_baseUrl/api/owned-dolls/serial-code/$serialCode'), headers: {'Authorization': 'Bearer $token'}).timeout(_timeout);
-    if (response.statusCode == 200) {
-      return singleOwnedDollFromJson(response.body);
-    } else {
-      throw Exception('Failed to find doll by serial code. Status code: ${response.statusCode}');
+    // Trim whitespace as recommended by BE team
+    final cleanSerialCode = serialCode.trim();
+    
+    // Build URL
+    final url = Uri.parse('$_baseUrl/api/owned-dolls/serial-code/$cleanSerialCode');
+    
+    // Debug logs as requested by BE team
+    print('📍 Exact URL: $url');
+    print('📏 URL Length: ${url.toString().length}');
+    print('🔤 Clean SerialCode: "$cleanSerialCode"');
+    
+    try {
+      final response = await http.get(
+        url,
+        headers: {
+          'Accept': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      ).timeout(_timeout);
+      
+      print('📊 Status Code: ${response.statusCode}');
+      print('📦 Response Body: ${response.body}');
+      
+      if (response.statusCode == 200) {
+        return singleOwnedDollFromJson(response.body);
+      } else {
+        throw Exception('Failed to find doll by serial code. Status code: ${response.statusCode}. Body: ${response.body}');
+      }
+    } catch (e) {
+      print('💥 Exception: $e');
+      rethrow;
     }
   }
 
