@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import '../models/auth_response.dart';
 import '../models/owned_character.dart';
@@ -29,6 +30,36 @@ class AuthService {
       return authResponseFromJson(response.body);
     } else {
       throw Exception('Failed to login. Status code: ${response.statusCode}');
+    }
+  }
+
+  Future<void> updateFcmToken(int userId, String fcmToken, String apiToken) async {
+    final url = Uri.parse('$_baseUrl/api/users/$userId/fcm-token');
+    if (kDebugMode) {
+      print('Updating FCM token for user $userId at $url');
+    }
+    try {
+      final response = await http.put(
+        url,
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+          'Authorization': 'Bearer $apiToken',
+        },
+        body: jsonEncode(<String, String>{'fcmToken': fcmToken}),
+      ).timeout(_timeout);
+
+      if (kDebugMode) {
+        print('Update FCM Token Response: ${response.statusCode} - ${response.body}');
+      }
+
+      if (response.statusCode != 200 && response.statusCode != 204) {
+        throw Exception('Failed to update FCM token. Status: ${response.statusCode}');
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error updating FCM token: $e');
+      }
+      // We don't rethrow the exception to not block the login flow
     }
   }
 

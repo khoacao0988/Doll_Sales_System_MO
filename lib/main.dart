@@ -4,6 +4,11 @@ import 'package:second/screens/home_page.dart';
 import 'services/session_service.dart';
 import 'screens/login_page.dart';
 
+// Firebase imports
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
+import 'services/notification_service.dart';
+
 // This class allows the app to trust the self-signed certificate used by the local server.
 class MyHttpOverrides extends HttpOverrides {
   @override
@@ -20,6 +25,12 @@ Future<void> main() async {
 
   // Activate the HttpOverrides to allow connection to the local HTTPS server
   HttpOverrides.global = MyHttpOverrides();
+
+  // Initialize Firebase & Notifications as per instructions
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+  await NotificationService.instance.initNotifications();
 
   // Initialize the session service to load any stored credentials
   await SessionService().init();

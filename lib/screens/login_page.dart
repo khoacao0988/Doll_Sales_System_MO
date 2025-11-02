@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../services/auth_service.dart';
+import '../services/notification_service.dart';
 import '../services/session_service.dart';
 import 'home_page.dart';
 
@@ -36,6 +37,14 @@ class _LoginPageState extends State<LoginPage> {
 
       final user = await _authService.getUserDetailsById(userId, authResponse.accessToken);
       SessionService().setSession(authResponse, user);
+
+      // After successful login, get FCM token and send it to the backend.
+      // This is a "fire-and-forget" operation to not block the UI.
+      NotificationService.instance.getFcmToken().then((fcmToken) {
+        if (fcmToken != null) {
+          _authService.updateFcmToken(user.userID, fcmToken, authResponse.accessToken);
+        }
+      });
 
       if (mounted) Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => const HomePage()));
     } catch (e) {
