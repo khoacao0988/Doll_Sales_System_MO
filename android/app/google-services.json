@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "117505181305",
+    "project_id": "dollstoreauth-a038b",
+    "storage_bucket": "dollstoreauth-a038b.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:117505181305:android:8218a4f2c3b3b6dd2b36a8",
+        "android_client_info": {
+          "package_name": "com.example.second"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "117505181305-bbic9p867jamjd1170h5f1iuukqb2jo2.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.second",
+            "certificate_hash": "1df002501fa99d013205adefe7d5ac4b37fed6a2"
+          }
+        },
+        {
+          "client_id": "117505181305-ta0t5dfuub24c7o4e885vlfn5ro6ppd2.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDQKdYhe9hMY3_XT7ND-6uSNCyMoVGd_AI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "117505181305-ta0t5dfuub24c7o4e885vlfn5ro6ppd2.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
