@@ -33,10 +33,11 @@ class AuthService {
     }
   }
 
-  Future<void> updateFcmToken(int userId, String fcmToken, String apiToken) async {
-    final url = Uri.parse('$_baseUrl/api/users/$userId/fcm-token');
+  // Corrected function to update device token
+  Future<void> updateDeviceToken(String deviceToken, String apiToken) async {
+    final url = Uri.parse('$_baseUrl/api/auth/device-token');
     if (kDebugMode) {
-      print('Updating FCM token for user $userId at $url');
+      print('Updating Device Token at $url');
     }
     try {
       final response = await http.put(
@@ -45,21 +46,20 @@ class AuthService {
           'Content-Type': 'application/json; charset=UTF-8',
           'Authorization': 'Bearer $apiToken',
         },
-        body: jsonEncode(<String, String>{'fcmToken': fcmToken}),
+        body: jsonEncode(<String, String>{'deviceToken': deviceToken}),
       ).timeout(_timeout);
 
       if (kDebugMode) {
-        print('Update FCM Token Response: ${response.statusCode} - ${response.body}');
+        print('Update Device Token Response: ${response.statusCode} - ${response.body}');
       }
 
       if (response.statusCode != 200 && response.statusCode != 204) {
-        throw Exception('Failed to update FCM token. Status: ${response.statusCode}');
+        throw Exception('Failed to update device token. Status: ${response.statusCode}');
       }
     } catch (e) {
       if (kDebugMode) {
-        print('Error updating FCM token: $e');
+        print('Error updating device token: $e');
       }
-      // We don't rethrow the exception to not block the login flow
     }
   }
 
@@ -73,7 +73,6 @@ class AuthService {
     }
   }
 
-  // New method to update user profile
   Future<User> updateUserProfile(int userId, String token, Map<String, dynamic> data) async {
     final response = await http.patch(
       Uri.parse('$_baseUrl/api/users/$userId'),
@@ -171,13 +170,9 @@ class AuthService {
   }
   
   Future<OwnedDoll> getOwnedDollBySerial(String serialCode, String token) async {
-    // Trim whitespace as recommended by BE team
     final cleanSerialCode = serialCode.trim();
-    
-    // Build URL
     final url = Uri.parse('$_baseUrl/api/owned-dolls/serial-code/$cleanSerialCode');
     
-    // Debug logs as requested by BE team
     print('📍 Exact URL: $url');
     print('📏 URL Length: ${url.toString().length}');
     print('🔤 Clean SerialCode: "$cleanSerialCode"');

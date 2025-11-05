@@ -67,7 +67,7 @@ class _LibraryPageState extends State<LibraryPage> {
     const Color primaryColor = Color(0xFF4CAF50); // Green
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Colors.grey[100], // Consistent background color
       appBar: AppBar(
         title: const Text('Library', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
         backgroundColor: Colors.transparent,
@@ -89,14 +89,14 @@ class _LibraryPageState extends State<LibraryPage> {
                   hintText: 'Search in Library...',
                   prefixIcon: const Icon(Icons.search, color: primaryColor),
                   filled: true,
-                  fillColor: primaryColor.withOpacity(0.05),
+                  fillColor: Colors.white, // Changed for better contrast
                   border: const OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12.0)), borderSide: BorderSide.none),
                 ),
               ),
             ),
             const SizedBox(height: 16),
             Container(
-              decoration: BoxDecoration(color: primaryColor.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
+              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12)), // Changed for better contrast
               child: Row(
                 children: [
                   Expanded(child: _buildToggleButton(context, 'Dolls', _showDolls, primaryColor)),
@@ -201,8 +201,7 @@ class _LibraryPageState extends State<LibraryPage> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade200),
-        boxShadow: [BoxShadow(color: Colors.grey.withOpacity(0.1), spreadRadius: 1, blurRadius: 5, offset: const Offset(0, 2))]
+        boxShadow: [BoxShadow(color: Colors.grey.withOpacity(0.08), spreadRadius: 1, blurRadius: 8, offset: const Offset(0, 2))]
       ),
       child: Padding(
         padding: const EdgeInsets.all(8.0),
@@ -212,7 +211,7 @@ class _LibraryPageState extends State<LibraryPage> {
             Expanded(
               child: Container(
                 decoration: BoxDecoration(
-                  color: Colors.grey[100],
+                  color: Colors.grey[200],
                   borderRadius: BorderRadius.circular(8),
                   image: DecorationImage(image: NetworkImage(imageUrl ?? 'https://placekitten.com/200/200'), fit: BoxFit.cover),
                 ),

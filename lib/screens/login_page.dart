@@ -38,11 +38,10 @@ class _LoginPageState extends State<LoginPage> {
       final user = await _authService.getUserDetailsById(userId, authResponse.accessToken);
       SessionService().setSession(authResponse, user);
 
-      // After successful login, get FCM token and send it to the backend.
-      // This is a "fire-and-forget" operation to not block the UI.
-      NotificationService.instance.getFcmToken().then((fcmToken) {
-        if (fcmToken != null) {
-          _authService.updateFcmToken(user.userID, fcmToken, authResponse.accessToken);
+      // After successful login, get device token and send it to the backend.
+      NotificationService.instance.getFcmToken().then((deviceToken) {
+        if (deviceToken != null) {
+          _authService.updateDeviceToken(deviceToken, authResponse.accessToken);
         }
       });
 
@@ -70,7 +69,7 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Colors.grey[100], // Consistent background color
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -88,7 +87,7 @@ class _LoginPageState extends State<LoginPage> {
                     padding: const EdgeInsets.only(bottom: 16.0),
                     child: Text(_errorMessage!, style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold), textAlign: TextAlign.center),
                   ),
-                TextField(controller: _usernameController, decoration: const InputDecoration(hintText: 'Username', filled: true, fillColor: Color(0xFFF1F4FF), prefixIcon: Icon(Icons.person_outline, color: Color(0xFF3F51B5)), border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12)), borderSide: BorderSide.none))),
+                TextField(controller: _usernameController, decoration: const InputDecoration(hintText: 'Username', filled: true, fillColor: Colors.white, prefixIcon: Icon(Icons.person_outline, color: Color(0xFF3F51B5)), border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12)), borderSide: BorderSide.none))),
                 const SizedBox(height: 16),
                 TextField(
                   controller: _passwordController,
@@ -96,7 +95,7 @@ class _LoginPageState extends State<LoginPage> {
                   decoration: InputDecoration(
                     hintText: 'Password',
                     filled: true,
-                    fillColor: const Color(0xFFF1F4FF),
+                    fillColor: Colors.white, // Match new textfield color
                     prefixIcon: const Icon(Icons.lock_outline, color: Color(0xFF3F51B5)),
                     suffixIcon: IconButton(
                       icon: Icon(_isPasswordObscured ? Icons.visibility_off_outlined : Icons.visibility_outlined, color: const Color(0xFF3F51B5)),

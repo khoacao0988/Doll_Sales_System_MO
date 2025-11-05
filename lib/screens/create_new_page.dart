@@ -9,6 +9,7 @@ class CreateNewPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+        backgroundColor: Colors.grey[100], // Consistent background color
         appBar: AppBar(
           title: const Text('Create New', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
           backgroundColor: Colors.transparent,

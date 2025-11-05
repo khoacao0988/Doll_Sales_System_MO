@@ -13,13 +13,14 @@ class ProfilePage extends StatelessWidget {
     final User? user = SessionService().user;
 
     if (user == null) {
+      // This should ideally not happen if the app flow is correct
       return const Scaffold(
         body: Center(child: Text('Error: User not logged in.')),
       );
     }
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Colors.grey[100], // Consistent background color
       appBar: AppBar(
         title: const Text('My Profile', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
         backgroundColor: Colors.transparent,
@@ -53,22 +54,27 @@ class ProfilePage extends StatelessWidget {
   Widget _buildProfileHeader(User user) {
     return Center(
       child: Stack(
+        alignment: Alignment.center,
         children: [
           CircleAvatar(
             radius: 70,
-            backgroundColor: const Color(0xFF3F51B5).withOpacity(0.1),
-            child: CircleAvatar(
-              radius: 65,
-              child: Text(user.userName.substring(0, 1).toUpperCase(), style: const TextStyle(fontSize: 50, fontWeight: FontWeight.bold, color: Colors.indigo)),
+            backgroundColor: Colors.white,
+            child: Text(
+              user.userName.isNotEmpty ? user.userName.substring(0, 1).toUpperCase() : 'U',
+              style: const TextStyle(fontSize: 60, fontWeight: FontWeight.bold, color: Color(0xFF3F51B5)),
             ),
           ),
           Positioned(
             bottom: 0,
-            right: 0,
+            right: 4,
             child: CircleAvatar(
-              radius: 20,
-              backgroundColor: Colors.white,
-              child: Icon(Icons.camera_alt, color: const Color(0xFF3F51B5), size: 22),
+              radius: 22,
+              backgroundColor: Colors.grey[100], // Match background
+              child: const CircleAvatar(
+                radius: 20,
+                backgroundColor: Colors.white,
+                child: Icon(Icons.camera_alt_outlined, color: Color(0xFF3F51B5), size: 24),
+              ),
             ),
           ),
         ],
@@ -82,13 +88,10 @@ class ProfilePage extends StatelessWidget {
         _buildInfoField('Username', user.userName, Icons.person_outline),
         const SizedBox(height: 16),
         _buildInfoField('Email', user.email, Icons.email_outlined),
-        const SizedBox(height: 16),
-        _buildInfoField('Role', user.role, Icons.security_outlined),
       ],
     );
   }
 
-  // CORRECTED: This now uses a Row to place buttons side-by-side.
   Widget _buildActionButtons(BuildContext context) {
     return Row(
       children: [
@@ -102,7 +105,8 @@ class ProfilePage extends StatelessWidget {
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF3F51B5),
               foregroundColor: Colors.white,
-              elevation: 2,
+              elevation: 4,
+              shadowColor: const Color(0xFF3F51B5).withOpacity(0.4),
               padding: const EdgeInsets.symmetric(vertical: 14),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
@@ -111,8 +115,8 @@ class ProfilePage extends StatelessWidget {
         const SizedBox(width: 16),
         Expanded(
           child: OutlinedButton.icon(
-            icon: const Icon(Icons.logout, size: 20, color: Colors.redAccent),
-            label: const Text('Logout', style: TextStyle(color: Colors.redAccent)),
+            icon: const Icon(Icons.logout, size: 20),
+            label: const Text('Logout'),
             onPressed: () {
               SessionService().clearSession();
               Navigator.of(context).pushAndRemoveUntil(
@@ -121,8 +125,10 @@ class ProfilePage extends StatelessWidget {
               );
             },
             style: OutlinedButton.styleFrom(
+              foregroundColor: Colors.red.shade700,
               padding: const EdgeInsets.symmetric(vertical: 14),
-              side: BorderSide(color: Colors.red.shade100),
+              backgroundColor: Colors.white,
+              side: BorderSide(color: Colors.grey.shade300),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
           ),
@@ -133,22 +139,29 @@ class ProfilePage extends StatelessWidget {
 
   Widget _buildInfoField(String label, String value, IconData icon) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
       decoration: BoxDecoration(
-        color: Colors.grey[50],
+        color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade200)
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.1),
+            spreadRadius: 1,
+            blurRadius: 5,
+            offset: const Offset(0, 3), // changes position of shadow
+          ),
+        ],
       ),
       child: Row(
         children: [
-          Icon(icon, color: Colors.grey[400]),
-          const SizedBox(width: 16),
+          Icon(icon, color: const Color(0xFF3F51B5).withOpacity(0.7)),
+          const SizedBox(width: 20),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(label, style: TextStyle(color: Colors.grey[500], fontSize: 12)),
-              const SizedBox(height: 2),
-              Text(value, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+              Text(label, style: TextStyle(color: Colors.grey[500], fontSize: 13, fontWeight: FontWeight.w500)),
+              const SizedBox(height: 4),
+              Text(value, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.black87)),
             ],
           ),
         ],

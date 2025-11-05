@@ -18,36 +18,60 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  // For Image Carousel
   final PageController _pageController = PageController();
-  Timer? _timer;
+  Timer? _imageCarouselTimer;
   int _currentPage = 0;
   late Future<List<String>> _imagesFuture;
   final AuthService _authService = AuthService();
+
+  // For Animated Background
+  Timer? _backgroundTimer;
+  Alignment _begin = Alignment.topLeft;
+  Alignment _end = Alignment.bottomRight;
+  final List<Color> _gradientColors = [
+    Colors.grey[100]!,
+    Colors.lightBlue[50]!,
+    Colors.purple[50]!,
+  ];
+  int _colorIndex = 0;
 
   @override
   void initState() {
     super.initState();
     _imagesFuture = _fetchImages();
+    _startBackgroundAnimation();
+  }
+
+  void _startBackgroundAnimation() {
+    _backgroundTimer = Timer.periodic(const Duration(seconds: 5), (timer) {
+      setState(() {
+        _colorIndex = (_colorIndex + 1) % _gradientColors.length;
+        _begin = _getRandomAlignment();
+        _end = _getRandomAlignment();
+      });
+    });
+  }
+
+  Alignment _getRandomAlignment() {
+    final alignments = [Alignment.topLeft, Alignment.topRight, Alignment.bottomLeft, Alignment.bottomRight, Alignment.center, Alignment.centerLeft, Alignment.centerRight];
+    return alignments[DateTime.now().microsecond % alignments.length];
   }
 
   @override
   void dispose() {
-    _timer?.cancel();
+    _imageCarouselTimer?.cancel();
+    _backgroundTimer?.cancel();
     _pageController.dispose();
     super.dispose();
   }
 
-  void _startTimer(int pageCount) {
-    if (pageCount <= 1) return; // Don't start timer if there's only one or zero images
-
-    _timer = Timer.periodic(const Duration(seconds: 3), (Timer timer) {
+  void _startImageCarouselTimer(int pageCount) {
+    if (pageCount <= 1) return;
+    _imageCarouselTimer = Timer.periodic(const Duration(seconds: 3), (Timer timer) {
       int nextPage = (_currentPage + 1) % pageCount;
       if (_pageController.hasClients) {
-        _pageController.animateToPage(
-          nextPage,
-          duration: const Duration(milliseconds: 400),
-          curve: Curves.easeIn,
-        );
+        _pageController.animateToPage(nextPage, duration: const Duration(milliseconds: 400), curve: Curves.easeIn);
       }
     });
   }
@@ -56,17 +80,15 @@ class _HomePageState extends State<HomePage> {
     try {
       final AuthResponse? auth = SessionService().authResponse;
       if (auth == null) throw Exception('Not authenticated');
-
       final allVariants = await _authService.getAllDollVariants(auth.accessToken);
       final images = allVariants.map((v) => v.image).where((img) => img != null && img.isNotEmpty).cast<String>().toList();
-      
       if (mounted) {
-        _startTimer(images.length);
+        _startImageCarouselTimer(images.length);
       }
       return images;
     } catch (e) {
       print('Failed to fetch images: $e');
-      return []; // Return empty list on error to show the default image
+      return [];
     }
   }
 
@@ -85,29 +107,42 @@ class _HomePageState extends State<HomePage> {
           Padding(padding: const EdgeInsets.only(right: 12.0, left: 8.0), child: CircleAvatar(backgroundColor: Colors.white, child: Text(userName.isNotEmpty ? userName.substring(0, 1).toUpperCase() : 'U', style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF6A11CB))))),
         ],
       ),
-      // CORRECTED: Using CustomScrollView with Slivers for better performance and layout structure.
-      body: CustomScrollView(
-        slivers: [
-          SliverToBoxAdapter(
-            child: _buildImageCarousel(),
-          ),
-          SliverPadding(
-            padding: const EdgeInsets.all(20),
-            sliver: SliverGrid.count(
-              crossAxisCount: 2,
-              crossAxisSpacing: 20,
-              mainAxisSpacing: 20,
-              children: <Widget>[
-                _buildMenuCard(context, 'Create new', const Color(0xFFF44336)),
-                _buildMenuCard(context, 'Library', const Color(0xFF4CAF50)),
-                _buildMenuCard(context, 'Your', const Color(0xFF2196F3)),
-                _buildMenuCard(context, 'Profile', const Color(0xFFFF9800)),
-              ],
+      body: Stack(
+        children: [
+          // Animated Background
+          AnimatedContainer(
+            duration: const Duration(seconds: 4),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: _begin,
+                end: _end,
+                colors: [_gradientColors[_colorIndex], _gradientColors[(_colorIndex + 1) % _gradientColors.length]],
+              ),
             ),
+          ),
+          // Main Content
+          CustomScrollView(
+            slivers: [
+              SliverToBoxAdapter(child: _buildImageCarousel()),
+              SliverPadding(
+                padding: const EdgeInsets.all(20),
+                sliver: SliverGrid.count(
+                  crossAxisCount: 2,
+                  crossAxisSpacing: 20,
+                  mainAxisSpacing: 20,
+                  children: <Widget>[
+                    _buildMenuCard(context, 'Create new', Icons.add_circle_outline, const Color(0xFF4A90E2)),
+                    _buildMenuCard(context, 'Library', Icons.library_books_outlined, const Color(0xFF50E3C2)),
+                    _buildMenuCard(context, 'Your Dolls', Icons.smart_toy_outlined, const Color(0xFF7B61FF)),
+                    _buildMenuCard(context, 'Profile', Icons.person_outline, const Color(0xFFF5A623)),
+                  ],
+                ),
+              ),
+            ],
           ),
         ],
       ),
-      bottomNavigationBar: const CustomBottomNavBar(currentItem: NavItem.home), 
+      bottomNavigationBar: const CustomBottomNavBar(currentItem: NavItem.home),
     );
   }
 
@@ -121,18 +156,13 @@ class _HomePageState extends State<HomePage> {
         if (snapshot.hasError || !snapshot.hasData || snapshot.data!.isEmpty) {
           return SizedBox(height: 200, width: double.infinity, child: Image.network('https://res.cloudinary.com/dygipvoal/image/upload/v1760081448/jirj9tgnupvsa0blmaua.jpg', fit: BoxFit.cover));
         }
-
         final images = snapshot.data!;
         return SizedBox(
           height: 200.0,
           child: PageView.builder(
             controller: _pageController,
             itemCount: images.length,
-            onPageChanged: (int page) {
-              setState(() {
-                _currentPage = page;
-              });
-            },
+            onPageChanged: (int page) => setState(() => _currentPage = page),
             itemBuilder: (context, index) => Image.network(images[index], fit: BoxFit.cover, width: double.infinity),
           ),
         );
@@ -140,20 +170,28 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildMenuCard(BuildContext context, String title, Color color) {
+  Widget _buildMenuCard(BuildContext context, String title, IconData icon, Color color) {
     return Card(
       color: color,
-      elevation: 5,
+      elevation: 8,
+      shadowColor: color.withOpacity(0.5),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       child: InkWell(
         onTap: () {
           if (title == 'Profile') Navigator.of(context).push(MaterialPageRoute(builder: (context) => const ProfilePage()));
           else if (title == 'Library') Navigator.of(context).push(MaterialPageRoute(builder: (context) => const LibraryPage()));
-          else if (title == 'Your') Navigator.of(context).push(MaterialPageRoute(builder: (context) => const YourPage()));
+          else if (title == 'Your Dolls') Navigator.of(context).push(MaterialPageRoute(builder: (context) => const YourPage()));
           else if (title == 'Create new') Navigator.of(context).push(MaterialPageRoute(builder: (context) => const CreateNewPage()));
         },
         borderRadius: BorderRadius.circular(20),
-        child: Center(child: Text(title, style: const TextStyle(fontSize: 22, color: Colors.white, fontWeight: FontWeight.bold))),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 50, color: Colors.white),
+            const SizedBox(height: 10),
+            Text(title, textAlign: TextAlign.center, style: const TextStyle(fontSize: 18, color: Colors.white, fontWeight: FontWeight.bold)),
+          ],
+        ),
       ),
     );
   }
