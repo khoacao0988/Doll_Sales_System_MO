@@ -1,58 +1,58 @@
-import 'dart:io';
-import 'package:flutter/material.dart';
-import 'package:second/screens/home_page.dart';
-import 'services/session_service.dart';
-import 'screens/login_page.dart';
-
-// Firebase imports
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/material.dart';
+import 'package:second/screens/your_page.dart';
+import 'package:second/services/notification_service.dart';
+import 'package:second/services/session_service.dart';
 import 'firebase_options.dart';
-import 'services/notification_service.dart';
-
-// This class allows the app to trust the self-signed certificate used by the local server.
-class MyHttpOverrides extends HttpOverrides {
-  @override
-  HttpClient createHttpClient(SecurityContext? context) {
-    return super.createHttpClient(context)
-      ..badCertificateCallback =
-          (X509Certificate cert, String host, int port) => true;
-  }
-}
+import 'screens/home_page.dart';
+import 'screens/library_page.dart';
+import 'screens/login_page.dart';
+import 'screens/notification_page.dart';
+import 'screens/profile_page.dart';
 
 Future<void> main() async {
-  // Ensure Flutter engine is initialized
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Activate the HttpOverrides to allow connection to the local HTTPS server
-  HttpOverrides.global = MyHttpOverrides();
+  // Initialize Firebase
+  try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+  } catch (e) {
+    print('Failed to initialize Firebase: $e');
+  }
 
-  // Initialize Firebase & Notifications as per instructions
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
-  await NotificationService.instance.initNotifications();
+  // Initialize Notification Service (This call is lightweight)
+  await NotificationService.instance.initialize();
 
-  // Initialize the session service to load any stored credentials
-  await SessionService().init();
+  // Check if user is already logged in
+  final isLoggedIn = await SessionService().isLoggedIn;
 
-  runApp(const MyApp());
+  runApp(MyApp(isLoggedIn: isLoggedIn));
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  final bool isLoggedIn;
+  const MyApp({super.key, required this.isLoggedIn});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Character Doll App',
+      debugShowCheckedModeBanner: false, // This will remove the DEBUG banner
+      title: 'Doll World',
       theme: ThemeData(
-        scaffoldBackgroundColor: Colors.white,
-        fontFamily: 'Roboto',
-        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF3F51B5)), // Indigo
+        primarySwatch: Colors.indigo,
+        visualDensity: VisualDensity.adaptivePlatformDensity,
+        fontFamily: 'Roboto', 
       ),
-      // CORRECT WAY: Decide the home page based on login status
-      home: SessionService().isLoggedIn ? const HomePage() : const LoginPage(),
-      debugShowCheckedModeBanner: false,
+      home: isLoggedIn ? const HomePage() : const LoginPage(),
+      routes: {
+        '/home': (context) => const HomePage(),
+        '/library': (context) => const LibraryPage(),
+        '/your': (context) => const YourPage(),
+        '/profile': (context) => const ProfilePage(),
+        '/notifications': (context) => const NotificationPage(),
+      },
     );
   }
 }

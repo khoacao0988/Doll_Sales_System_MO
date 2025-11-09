@@ -1,7 +1,24 @@
 import 'dart:convert';
 
+// Helper to safely parse an integer that might be a String
+int _parseDynamicInt(dynamic value, {int defaultValue = 0}) {
+  if (value is int) {
+    return value;
+  } else if (value is String) {
+    return int.tryParse(value) ?? defaultValue;
+  }
+  return defaultValue;
+}
+
 // A function to parse the JSON for a single detailed character
-Character characterFromJson(String str) => Character.fromJson(json.decode(str));
+Character characterFromJson(String str) {
+  final jsonData = json.decode(str);
+  // Handle cases where the character data is nested under a "data" key
+  if (jsonData.containsKey('data') && jsonData['data'] is Map) {
+    return Character.fromJson(jsonData['data']);
+  }
+  return Character.fromJson(jsonData);
+}
 
 class Character {
     final int characterId;
@@ -25,10 +42,10 @@ class Character {
     });
 
     factory Character.fromJson(Map<String, dynamic> json) => Character(
-        characterId: json["characterId"],
+        characterId: _parseDynamicInt(json["characterId"]),
         name: json["name"],
         image: json["image"],
-        ageRange: json["ageRange"],
+        ageRange: _parseDynamicInt(json["ageRange"]),
         personality: json["personality"],
         description: json["description"],
         isActive: json["isActive"],

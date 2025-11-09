@@ -1,6 +1,23 @@
 import 'dart:convert';
 
-DollVariant dollVariantFromJson(String str) => DollVariant.fromJson(json.decode(str));
+// Helper to safely parse an integer that might be a String
+int _parseDynamicInt(dynamic value, {int defaultValue = 0}) {
+  if (value is int) {
+    return value;
+  } else if (value is String) {
+    return int.tryParse(value) ?? defaultValue;
+  }
+  return defaultValue;
+}
+
+DollVariant dollVariantFromJson(String str) {
+    final jsonData = json.decode(str);
+    // Handle cases where the doll data is nested under a "data" key
+    if (jsonData.containsKey('data') && jsonData['data'] is Map) {
+        return DollVariant.fromJson(jsonData['data']);
+    }
+    return DollVariant.fromJson(jsonData);
+}
 
 class DollVariant {
     final int dollVariantId;
@@ -26,11 +43,11 @@ class DollVariant {
     });
 
     factory DollVariant.fromJson(Map<String, dynamic> json) => DollVariant(
-        dollVariantId: json["dollVariantID"],
-        dollModelId: json["dollModelID"],
+        dollVariantId: _parseDynamicInt(json["dollVariantID"]),
+        dollModelId: _parseDynamicInt(json["dollModelID"]),
         dollModelName: json["dollModelName"],
         name: json["name"],
-        price: json["price"],
+        price: json["price"] is String ? (num.tryParse(json["price"]) ?? 0) : json["price"], // Also make price robust
         color: json["color"],
         size: json["size"],
         image: json["image"],

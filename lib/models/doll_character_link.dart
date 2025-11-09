@@ -1,5 +1,15 @@
 import 'dart:convert';
 
+// Helper to safely parse an integer that might be a String
+int _parseDynamicInt(dynamic value, {int defaultValue = 0}) {
+  if (value is int) {
+    return value;
+  } else if (value is String) {
+    return int.tryParse(value) ?? defaultValue;
+  }
+  return defaultValue;
+}
+
 // This function parses the response from the link API.
 // It returns the first link object if it exists, otherwise null.
 DollCharacterLink? dollCharacterLinkFromJson(String str) {
@@ -16,7 +26,7 @@ class DollCharacterLink {
   final int ownedDollID;
   final int userCharacterID;
   final String characterName;
-  final int status; // CORRECTED: Changed type from String to int
+  final int status; 
   final bool isActive;
 
   DollCharacterLink({
@@ -30,11 +40,11 @@ class DollCharacterLink {
 
   // This factory parses the object inside the 'data' array.
   factory DollCharacterLink.fromJson(Map<String, dynamic> json) => DollCharacterLink(
-    linkID: json["linkID"],
-    ownedDollID: json["ownedDollID"],
-    userCharacterID: json["userCharacterID"],
+    linkID: _parseDynamicInt(json["linkID"]),
+    ownedDollID: _parseDynamicInt(json["ownedDollID"]),
+    userCharacterID: _parseDynamicInt(json["userCharacterID"]),
     characterName: json["characterName"],
-    status: json["status"], // Reads the int status
+    status: _parseDynamicInt(json["status"]),
     isActive: json["isActive"] ?? false,
   );
 }

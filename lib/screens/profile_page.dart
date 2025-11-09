@@ -13,72 +13,54 @@ class ProfilePage extends StatelessWidget {
     final User? user = SessionService().user;
 
     if (user == null) {
-      // This should ideally not happen if the app flow is correct
       return const Scaffold(
         body: Center(child: Text('Error: User not logged in.')),
       );
     }
 
     return Scaffold(
-      backgroundColor: Colors.grey[100], // Consistent background color
-      appBar: AppBar(
-        title: const Text('My Profile', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        automaticallyImplyLeading: false,
-        flexibleSpace: Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              colors: [Color(0xFF6A11CB), Color(0xFF2575FC)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-          ),
-        ),
-      ),
-      body: ListView(
-        padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 10.0),
-        children: <Widget>[
-          const SizedBox(height: 20),
-          _buildProfileHeader(user),
-          const SizedBox(height: 30),
-          _buildInfoSection(user),
-          const SizedBox(height: 30),
-          _buildActionButtons(context),
-        ],
-      ),
-      bottomNavigationBar: const CustomBottomNavBar(currentItem: NavItem.profile),
-    );
-  }
-
-  Widget _buildProfileHeader(User user) {
-    return Center(
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          CircleAvatar(
-            radius: 70,
-            backgroundColor: Colors.white,
-            child: Text(
-              user.userName.isNotEmpty ? user.userName.substring(0, 1).toUpperCase() : 'U',
-              style: const TextStyle(fontSize: 60, fontWeight: FontWeight.bold, color: Color(0xFF3F51B5)),
-            ),
-          ),
-          Positioned(
-            bottom: 0,
-            right: 4,
-            child: CircleAvatar(
-              radius: 22,
-              backgroundColor: Colors.grey[100], // Match background
-              child: const CircleAvatar(
-                radius: 20,
-                backgroundColor: Colors.white,
-                child: Icon(Icons.camera_alt_outlined, color: Color(0xFF3F51B5), size: 24),
+      backgroundColor: Colors.grey[100],
+      body: CustomScrollView(
+        slivers: <Widget>[
+          SliverAppBar(
+            expandedHeight: 200.0,
+            floating: false,
+            pinned: true,
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            automaticallyImplyLeading: false,
+            flexibleSpace: FlexibleSpaceBar(
+              title: const Text('My Profile', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, shadows: [Shadow(blurRadius: 2, color: Colors.black45)])),
+              background: Container(
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Color(0xFF6A11CB), Color(0xFF2575FC)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                ),
+                child: Image.network(
+                  'https://res.cloudinary.com/dygipvoal/image/upload/v1762391998/di1z5bqlmnimy5knpjdv.png',
+                  fit: BoxFit.cover,
+                  color: Colors.black.withOpacity(0.3),
+                  colorBlendMode: BlendMode.darken,
+                ),
               ),
             ),
           ),
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(24, 24, 24, 0), // Adjusted padding
+            sliver: SliverList(
+              delegate: SliverChildListDelegate([
+                _buildInfoSection(user),
+                const SizedBox(height: 30),
+                _buildActionButtons(context),
+              ]),
+            ),
+          ),
         ],
       ),
+      bottomNavigationBar: const CustomBottomNavBar(currentItem: NavItem.profile),
     );
   }
 
@@ -87,7 +69,15 @@ class ProfilePage extends StatelessWidget {
       children: [
         _buildInfoField('Username', user.userName, Icons.person_outline),
         const SizedBox(height: 16),
+        if (user.fullName != null && user.fullName!.isNotEmpty) ...[
+          _buildInfoField('Full Name', user.fullName!, Icons.badge_outlined),
+          const SizedBox(height: 16),
+        ],
         _buildInfoField('Email', user.email, Icons.email_outlined),
+        const SizedBox(height: 16),
+        if (user.phones != null && user.phones!.isNotEmpty) ...[
+           _buildInfoField('Phone', user.phones!, Icons.phone_outlined),
+        ],
       ],
     );
   }
@@ -148,7 +138,7 @@ class ProfilePage extends StatelessWidget {
             color: Colors.grey.withOpacity(0.1),
             spreadRadius: 1,
             blurRadius: 5,
-            offset: const Offset(0, 3), // changes position of shadow
+            offset: const Offset(0, 3),
           ),
         ],
       ),
@@ -156,13 +146,15 @@ class ProfilePage extends StatelessWidget {
         children: [
           Icon(icon, color: const Color(0xFF3F51B5).withOpacity(0.7)),
           const SizedBox(width: 20),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(label, style: TextStyle(color: Colors.grey[500], fontSize: 13, fontWeight: FontWeight.w500)),
-              const SizedBox(height: 4),
-              Text(value, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.black87)),
-            ],
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(label, style: TextStyle(color: Colors.grey[500], fontSize: 13, fontWeight: FontWeight.w500)),
+                const SizedBox(height: 4),
+                Text(value, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.black87), overflow: TextOverflow.ellipsis),
+              ],
+            ),
           ),
         ],
       ),

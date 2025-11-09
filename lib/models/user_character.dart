@@ -1,28 +1,43 @@
 import 'dart:convert';
 
-// Parses the nested data object from the single-item API response
-UserCharacter userCharacterFromJson(String str) {
-  final Map<String, dynamic> jsonData = json.decode(str);
-  return UserCharacter.fromJson(jsonData['data']);
+// Helper to safely parse an integer that might be a String
+int _parseDynamicInt(dynamic value, {int defaultValue = 0}) {
+  if (value is int) {
+    return value;
+  } else if (value is String) {
+    return int.tryParse(value) ?? defaultValue;
+  }
+  return defaultValue;
 }
+
+List<UserCharacter> userCharacterFromJson(String str) => List<UserCharacter>.from(json.decode(str).map((x) => UserCharacter.fromJson(x)));
 
 class UserCharacter {
     final int userCharacterID;
+    final int userID;
     final int characterID;
     final String characterName;
-    final int status; // Added status field as an int
+    final String? characterImage;
+    final int status;
+    final bool isActive;
 
     UserCharacter({
         required this.userCharacterID,
+        required this.userID,
         required this.characterID,
         required this.characterName,
+        this.characterImage,
         required this.status,
+        required this.isActive,
     });
 
     factory UserCharacter.fromJson(Map<String, dynamic> json) => UserCharacter(
-        userCharacterID: json["userCharacterID"],
-        characterID: json["characterID"],
+        userCharacterID: _parseDynamicInt(json["userCharacterID"]),
+        userID: _parseDynamicInt(json["userID"]),
+        characterID: _parseDynamicInt(json["characterID"]),
         characterName: json["characterName"],
-        status: json["status"], // Reads the int status
+        characterImage: json["characterImage"],
+        status: _parseDynamicInt(json["status"]),
+        isActive: json["isActive"] ?? false,
     );
 }

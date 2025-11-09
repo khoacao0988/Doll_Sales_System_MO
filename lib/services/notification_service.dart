@@ -1,56 +1,44 @@
+import 'dart:convert';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:http/http.dart' as http;
+import 'package:second/models/pagination_info.dart';
+import '../models/notification_item.dart';
+import 'session_service.dart';
+
+class NotificationResponse {
+  final List<NotificationItem> items;
+  final PaginationInfo pagination;
+
+  NotificationResponse({required this.items, required this.pagination});
+
+  factory NotificationResponse.fromJson(Map<String, dynamic> json) {
+    return NotificationResponse(
+      items: (json['items'] as List).map((item) => NotificationItem.fromJson(item)).toList(),
+      pagination: PaginationInfo.fromJson(json['pagination']),
+    );
+  }
+}
 
 class NotificationService {
+  static final NotificationService instance = NotificationService._internal();
+  NotificationService._internal();
+
   final FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
-  final FlutterLocalNotificationsPlugin _flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
+  static const String _baseUrl = 'https://dollaistore-api-dxdggjazgpckh2cc.japaneast-01.azurewebsites.net';
 
-  // Private constructor
-  NotificationService._privateConstructor();
-  // Singleton instance
-  static final NotificationService instance = NotificationService._privateConstructor();
-
-  Future<void> initNotifications() async {
-    // 1. Initialize local notifications settings
-    await _initLocalNotifications();
-
-    // 2. Request permission from the user (for iOS and modern Android)
-    await requestPermission();
-
-    // 3. Set up listener for foreground messages
-    _setupForegroundMessageHandler();
-  }
-
-  Future<void> requestPermission() async {
-    NotificationSettings settings = await _firebaseMessaging.requestPermission(
-      alert: true,
-      announcement: false,
-      badge: true,
-      carPlay: false,
-      criticalAlert: false,
-      provisional: false,
-      sound: true,
-    );
-
-    if (kDebugMode) {
-      if (settings.authorizationStatus == AuthorizationStatus.authorized) {
-        print('User granted permission');
-      } else if (settings.authorizationStatus == AuthorizationStatus.provisional) {
-        print('User granted provisional permission');
-      } else {
-        print('User declined or has not accepted permission');
-      }
-    }
+  Future<void> initialize() async {
+    await _firebaseMessaging.requestPermission();
+    // You can add foreground message handling here if needed
   }
 
   Future<String?> getFcmToken() async {
     try {
-      final token = await _firebaseMessaging.getToken();
+      final String? fcmToken = await _firebaseMessaging.getToken();
       if (kDebugMode) {
-        print('🔥 FCM TOKEN = $token');
+        print('🔥 FCM TOKEN = $fcmToken');
       }
-      return token;
+      return fcmToken;
     } catch (e) {
       if (kDebugMode) {
         print('Error getting FCM token: $e');
@@ -59,62 +47,55 @@ class NotificationService {
     }
   }
 
-  Future<void> _initLocalNotifications() async {
-    // Define channel
-    const AndroidNotificationChannel channel = AndroidNotificationChannel(
-      'high_importance_channel', // id
-      'High Importance Notifications', // title
-      description: 'This channel is used for important notifications.', // description
-      importance: Importance.max,
+  // Get list of notifications
+  Future<NotificationResponse> getNotifications({
+    bool onlyUnread = false,
+    int page = 1,
+    int pageSize = 20,
+  }) async {
+    final token = SessionService().authResponse?.accessToken;
+    if (token == null) throw Exception('Not authenticated');
+
+    final queryParams = {
+      'onlyUnread': onlyUnread.toString(),
+      'page': page.toString(),
+      'pageSize': pageSize.toString(),
+    };
+
+    final uri = Uri.parse('$_baseUrl/api/notifications').replace(queryParameters: queryParams);
+
+    final response = await http.get(
+      uri,
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
     );
 
-    // Create channel
-    await _flutterLocalNotificationsPlugin
-        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
-        ?.createNotificationChannel(channel);
-
-    // Initialize plugin
-    const AndroidInitializationSettings initializationSettingsAndroid = AndroidInitializationSettings('@mipmap/ic_launcher');
-    const InitializationSettings initializationSettings = InitializationSettings(android: initializationSettingsAndroid);
-    await _flutterLocalNotificationsPlugin.initialize(initializationSettings);
-  }
-
-  void _setupForegroundMessageHandler() {
-    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      if (kDebugMode) {
-        print('Got a message whilst in the foreground!');
-        print('Message data: ${message.data}');
-      }
-
-      if (message.notification != null) {
-        if (kDebugMode) {
-          print('Message also contained a notification: ${message.notification}');
-        }
-        // Show local notification
-        _showLocalNotification(message);
-      }
-    });
-  }
-
-  void _showLocalNotification(RemoteMessage message) {
-    RemoteNotification? notification = message.notification;
-    AndroidNotification? android = message.notification?.android;
-
-    if (notification != null && android != null) {
-      _flutterLocalNotificationsPlugin.show(
-        notification.hashCode,
-        notification.title,
-        notification.body,
-        const NotificationDetails(
-          android: AndroidNotificationDetails(
-            'high_importance_channel', // channel id from _initLocalNotifications
-            'High Importance Notifications', // channel name
-            channelDescription: 'This channel is used for important notifications.',
-            importance: Importance.max,
-            icon: '@mipmap/ic_launcher',
-          ),
-        ),
-      );
+    if (response.statusCode == 200) {
+      return NotificationResponse.fromJson(jsonDecode(response.body));
+    } else if (response.statusCode == 401) {
+      throw Exception('Unauthorized - Please login again');
+    } else {
+      throw Exception('Failed to load notifications: ${response.statusCode}');
     }
+  }
+
+  // Mark a notification as read
+  Future<bool> markAsRead(int notificationId) async {
+    final token = SessionService().authResponse?.accessToken;
+    if (token == null) throw Exception('Not authenticated');
+    
+    final uri = Uri.parse('$_baseUrl/api/notifications/$notificationId/read');
+
+    final response = await http.patch(
+      uri,
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+    );
+
+    return response.statusCode == 204;
   }
 }

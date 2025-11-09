@@ -6,7 +6,7 @@ class User {
     final String? fullName;
     final String? phones;
     final String email;
-    final int? age; // Added age
+    final int? age;
     final int status;
     final String role;
     final DateTime createdAt;
@@ -17,23 +17,36 @@ class User {
         this.fullName,
         this.phones,
         required this.email,
-        this.age, // Added to constructor
+        this.age,
         required this.status,
         required this.role,
         required this.createdAt,
     });
 
-    factory User.fromJson(Map<String, dynamic> json) => User(
-        userID: json["userID"], 
-        userName: json["userName"], 
+    // Helper function to parse a value that could be an int or a String
+    static int _parseDynamicInt(dynamic value, {int defaultValue = 0}) {
+      if (value is int) {
+        return value;
+      } else if (value is String) {
+        return int.tryParse(value) ?? defaultValue;
+      }
+      return defaultValue;
+    }
+
+    // This factory is now fully robust for both userID and status.
+    factory User.fromJson(Map<String, dynamic> json) {
+      return User(
+        userID: _parseDynamicInt(json["userID"] ?? json["id"]), // Handles both "userID" and "id", int or String
+        userName: json["userName"],
         fullName: json["fullName"],
         phones: json["phones"],
         email: json["email"],
-        age: json["age"], // Read age
-        status: json["status"], 
+        age: _parseDynamicInt(json["age"], defaultValue: 0), // Also make age robust
+        status: _parseDynamicInt(json["status"]), // Robust parsing for status
         role: json["role"],
         createdAt: DateTime.parse(json["createdAt"]),
-    );
+      );
+    }
 
     Map<String, dynamic> toJson() => {
         "userID": userID,

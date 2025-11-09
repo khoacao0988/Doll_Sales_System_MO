@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
-import '../models/auth_response.dart';
+import 'package:video_player/video_player.dart';
 import '../services/session_service.dart';
-import '../services/auth_service.dart';
 import 'profile_page.dart';
 import 'library_page.dart';
 import 'your_page.dart';
@@ -18,12 +17,8 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  // For Image Carousel
-  final PageController _pageController = PageController();
-  Timer? _imageCarouselTimer;
-  int _currentPage = 0;
-  late Future<List<String>> _imagesFuture;
-  final AuthService _authService = AuthService();
+  // For Video Player
+  late VideoPlayerController _videoController;
 
   // For Animated Background
   Timer? _backgroundTimer;
@@ -39,7 +34,15 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
-    _imagesFuture = _fetchImages();
+    // Initialize Video Player
+    _videoController = VideoPlayerController.networkUrl(
+      Uri.parse('https://res.cloudinary.com/dygipvoal/video/upload/v1762022212/myhc16ricbztewdpzjcg.mp4'),
+    )..initialize().then((_) {
+        _videoController.setLooping(true);
+        _videoController.play();
+        setState(() {});
+      });
+
     _startBackgroundAnimation();
   }
 
@@ -60,36 +63,9 @@ class _HomePageState extends State<HomePage> {
 
   @override
   void dispose() {
-    _imageCarouselTimer?.cancel();
+    _videoController.dispose();
     _backgroundTimer?.cancel();
-    _pageController.dispose();
     super.dispose();
-  }
-
-  void _startImageCarouselTimer(int pageCount) {
-    if (pageCount <= 1) return;
-    _imageCarouselTimer = Timer.periodic(const Duration(seconds: 3), (Timer timer) {
-      int nextPage = (_currentPage + 1) % pageCount;
-      if (_pageController.hasClients) {
-        _pageController.animateToPage(nextPage, duration: const Duration(milliseconds: 400), curve: Curves.easeIn);
-      }
-    });
-  }
-
-  Future<List<String>> _fetchImages() async {
-    try {
-      final AuthResponse? auth = SessionService().authResponse;
-      if (auth == null) throw Exception('Not authenticated');
-      final allVariants = await _authService.getAllDollVariants(auth.accessToken);
-      final images = allVariants.map((v) => v.image).where((img) => img != null && img.isNotEmpty).cast<String>().toList();
-      if (mounted) {
-        _startImageCarouselTimer(images.length);
-      }
-      return images;
-    } catch (e) {
-      print('Failed to fetch images: $e');
-      return [];
-    }
   }
 
   @override
@@ -123,7 +99,7 @@ class _HomePageState extends State<HomePage> {
           // Main Content
           CustomScrollView(
             slivers: [
-              SliverToBoxAdapter(child: _buildImageCarousel()),
+              SliverToBoxAdapter(child: _buildVideoPlayer()),
               SliverPadding(
                 padding: const EdgeInsets.all(20),
                 sliver: SliverGrid.count(
@@ -146,27 +122,16 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildImageCarousel() {
-    return FutureBuilder<List<String>>(
-      future: _imagesFuture,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const SizedBox(height: 200, child: Center(child: CircularProgressIndicator()));
-        }
-        if (snapshot.hasError || !snapshot.hasData || snapshot.data!.isEmpty) {
-          return SizedBox(height: 200, width: double.infinity, child: Image.network('https://res.cloudinary.com/dygipvoal/image/upload/v1760081448/jirj9tgnupvsa0blmaua.jpg', fit: BoxFit.cover));
-        }
-        final images = snapshot.data!;
-        return SizedBox(
-          height: 200.0,
-          child: PageView.builder(
-            controller: _pageController,
-            itemCount: images.length,
-            onPageChanged: (int page) => setState(() => _currentPage = page),
-            itemBuilder: (context, index) => Image.network(images[index], fit: BoxFit.cover, width: double.infinity),
-          ),
-        );
-      },
+  Widget _buildVideoPlayer() {
+    return SizedBox(
+      height: 200.0,
+      width: double.infinity,
+      child: _videoController.value.isInitialized
+          ? AspectRatio(
+              aspectRatio: _videoController.value.aspectRatio,
+              child: VideoPlayer(_videoController),
+            )
+          : const Center(child: CircularProgressIndicator()),
     );
   }
 

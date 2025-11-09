@@ -64,7 +64,7 @@ class _LibraryPageState extends State<LibraryPage> {
 
   @override
   Widget build(BuildContext context) {
-    const Color primaryColor = Color(0xFF4CAF50); // Green
+    const Color primaryColor = Color(0xFF87CEEB); // Sky Blue
 
     return Scaffold(
       backgroundColor: Colors.grey[100], // Consistent background color
@@ -140,7 +140,7 @@ class _LibraryPageState extends State<LibraryPage> {
             itemCount: filteredCharacters.length,
             itemBuilder: (context, index) {
               final character = filteredCharacters[index];
-              return _buildGridItem(character.name, character.image, false, const Color(0xFF4CAF50));
+              return _buildGridItem(character.name, character.image, false, const Color(0xFF87CEEB));
             },
           );
         }
@@ -175,7 +175,7 @@ class _LibraryPageState extends State<LibraryPage> {
             itemCount: filteredDolls.length,
             itemBuilder: (context, index) {
               final doll = filteredDolls[index];
-              return _buildGridItem(doll.name, doll.image, false, const Color(0xFF4CAF50));
+              return _buildGridItem(doll.name, doll.image, false, const Color(0xFF87CEEB));
             },
           );
         }

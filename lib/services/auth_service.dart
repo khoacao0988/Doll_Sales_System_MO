@@ -33,7 +33,32 @@ class AuthService {
     }
   }
 
-  // Corrected function to update device token
+  Future<AuthResponse> googleLogin(String idToken, String? deviceToken) async {
+    final url = Uri.parse('$_baseUrl/api/auth/google-login');
+    final body = <String, dynamic>{
+      'idToken': idToken,
+      if (deviceToken != null) 'deviceToken': deviceToken,
+    };
+
+    final response = await http.post(
+      url,
+      headers: <String, String>{'Content-Type': 'application/json; charset=UTF-8'},
+      body: jsonEncode(body),
+    ).timeout(_timeout);
+
+    if (response.statusCode == 200) {
+      return authResponseFromJson(response.body);
+    } else {
+      try {
+        final errorBody = jsonDecode(response.body);
+        final errorMessage = errorBody['message'] ?? 'Google login failed';
+        throw Exception('$errorMessage (Status code: ${response.statusCode})');
+      } catch (_) {
+        throw Exception('Failed to login with Google. Status code: ${response.statusCode}');
+      }
+    }
+  }
+
   Future<void> updateDeviceToken(String deviceToken, String apiToken) async {
     final url = Uri.parse('$_baseUrl/api/auth/device-token');
     if (kDebugMode) {

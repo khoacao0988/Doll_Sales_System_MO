@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import '../services/auth_service.dart';
+import '../models/auth_response.dart' as auth_model;
+import '../models/user.dart';
 import '../services/notification_service.dart';
 import '../services/session_service.dart';
 import 'home_page.dart';
@@ -30,28 +33,80 @@ class _LoginPageState extends State<LoginPage> {
 
     try {
       final authResponse = await _authService.login(_usernameController.text, _passwordController.text);
+      await _handleSuccessfulLogin(authResponse, isGoogleLogin: false);
+    } catch (e) {
+      _handleLoginError(e);
+    }
+  }
+
+  Future<void> _signInWithGoogle() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      // Initialize GoogleSignIn with the Web Client ID for backend authentication.
+      final GoogleSignIn googleSignIn = GoogleSignIn(
+        serverClientId: '117505181305-ta0t5dfuub24c7o4e885vlfn5ro6ppd2.apps.googleusercontent.com',
+      );
+
+      final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
+      if (googleUser == null) {
+        setState(() => _isLoading = false);
+        return;
+      }
+
+      // Directly get the ID token from the Google Sign-In authentication object.
+      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+      final String? idToken = googleAuth.idToken;
+
+      if (idToken == null) {
+        throw Exception('Could not get Google ID token.');
+      }
+
+      final String? fcmToken = await NotificationService.instance.getFcmToken();
+      final authResponse = await _authService.googleLogin(idToken, fcmToken);
+      await _handleSuccessfulLogin(authResponse, isGoogleLogin: true);
+
+    } catch (e) {
+      _handleLoginError(e);
+    } finally {
+      // Ensure Google sign out to allow account switching
+      await GoogleSignIn().signOut();
+    }
+  }
+
+  Future<void> _handleSuccessfulLogin(auth_model.AuthResponse authResponse, {required bool isGoogleLogin}) async {
+    User? user;
+    if (isGoogleLogin && authResponse.user != null) {
+      user = authResponse.user!;
+    } else {
       final Map<String, dynamic> decodedToken = JwtDecoder.decode(authResponse.accessToken);
-      final userId = int.parse(decodedToken['sub'] ?? '0');
+      final userId = int.tryParse(decodedToken['sub'] ?? '');
+      if (userId == null) throw Exception('User ID not found or invalid in token.');
+      user = await _authService.getUserDetailsById(userId, authResponse.accessToken);
+    }
 
-      if (userId == 0) throw Exception('User ID not found in token.');
+    SessionService().setSession(authResponse, user);
 
-      final user = await _authService.getUserDetailsById(userId, authResponse.accessToken);
-      SessionService().setSession(authResponse, user);
-
-      // After successful login, get device token and send it to the backend.
+    if (!isGoogleLogin) {
       NotificationService.instance.getFcmToken().then((deviceToken) {
         if (deviceToken != null) {
           _authService.updateDeviceToken(deviceToken, authResponse.accessToken);
         }
       });
+    }
 
-      if (mounted) Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => const HomePage()));
-    } catch (e) {
+    if (mounted) Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => const HomePage()));
+  }
+
+  void _handleLoginError(dynamic e) {
+    if (mounted) {
       setState(() {
         _errorMessage = e.toString().replaceFirst('Exception: ', '');
+        _isLoading = false;
       });
-    } finally {
-      if (mounted) setState(() { _isLoading = false; });
     }
   }
 
@@ -69,7 +124,7 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[100], // Consistent background color
+      backgroundColor: Colors.grey[100],
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -78,7 +133,7 @@ class _LoginPageState extends State<LoginPage> {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: <Widget>[
-                const Text('Character Doll', textAlign: TextAlign.center, style: TextStyle(fontSize: 36, fontWeight: FontWeight.bold, color: Color(0xFF3F51B5))),
+                const Text('Doll World', textAlign: TextAlign.center, style: TextStyle(fontSize: 36, fontWeight: FontWeight.bold, color: Color(0xFF3F51B5))),
                 const SizedBox(height: 10),
                 const Text('Welcome back!', textAlign: TextAlign.center, style: TextStyle(fontSize: 18, color: Colors.black54)),
                 const SizedBox(height: 50),
@@ -95,7 +150,7 @@ class _LoginPageState extends State<LoginPage> {
                   decoration: InputDecoration(
                     hintText: 'Password',
                     filled: true,
-                    fillColor: Colors.white, // Match new textfield color
+                    fillColor: Colors.white,
                     prefixIcon: const Icon(Icons.lock_outline, color: Color(0xFF3F51B5)),
                     suffixIcon: IconButton(
                       icon: Icon(_isPasswordObscured ? Icons.visibility_off_outlined : Icons.visibility_outlined, color: const Color(0xFF3F51B5)),
@@ -114,10 +169,9 @@ class _LoginPageState extends State<LoginPage> {
                 Row(children: <Widget>[const Expanded(child: Divider(color: Colors.grey)), Padding(padding: const EdgeInsets.symmetric(horizontal: 8.0), child: Text('Or continue with', style: TextStyle(color: Colors.grey[600]))), const Expanded(child: Divider(color: Colors.grey))]),
                 const SizedBox(height: 20),
                 OutlinedButton.icon(
-                  // Reverted to a simple text-based icon
                   icon: const Text('G', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.blue)),
                   label: const Text('Google', style: TextStyle(color: Colors.black54, fontWeight: FontWeight.bold)),
-                  onPressed: () { /* TODO: Implement Google Login */ },
+                  onPressed: _isLoading ? null : _signInWithGoogle,
                   style: OutlinedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 12), side: BorderSide(color: Colors.grey.shade300), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
                 ),
                 const SizedBox(height: 40),
