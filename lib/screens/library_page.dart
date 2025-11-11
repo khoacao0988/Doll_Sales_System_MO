@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
-import '../models/auth_response.dart';
 import '../models/character.dart';
 import '../models/doll_variant.dart';
-import '../models/user.dart';
 import '../services/auth_service.dart';
 import '../services/session_service.dart';
 import '../widgets/custom_bottom_nav_bar.dart';
+import 'chat_screen.dart'; // Import the new chat screen
 
 class LibraryPage extends StatefulWidget {
   const LibraryPage({super.key});
@@ -20,18 +19,21 @@ class _LibraryPageState extends State<LibraryPage> {
   late Future<List<DollVariant>> _detailedDollsFuture;
   final AuthService _authService = AuthService();
 
-  // For Search functionality
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
-
-  final User? _user = SessionService().user;
-  final AuthResponse? _authResponse = SessionService().authResponse;
 
   @override
   void initState() {
     super.initState();
-    _detailedCharactersFuture = _fetchCharacterDetails();
-    _detailedDollsFuture = _fetchDollDetails();
+    final session = SessionService();
+    if (session.user != null && session.authResponse != null) {
+      _detailedCharactersFuture = _fetchCharacterDetails(session.user!.userID, session.authResponse!.accessToken);
+      _detailedDollsFuture = _fetchDollDetails(session.user!.userID, session.authResponse!.accessToken);
+    } else {
+      // Handle not logged in case
+      _detailedCharactersFuture = Future.value([]);
+      _detailedDollsFuture = Future.value([]);
+    }
 
     _searchController.addListener(() {
       setState(() {
@@ -46,19 +48,17 @@ class _LibraryPageState extends State<LibraryPage> {
     super.dispose();
   }
 
-  Future<List<Character>> _fetchCharacterDetails() async {
-    if (_user == null || _authResponse == null) throw Exception('User not authenticated.');
-    final ownedCharacters = await _authService.getOwnedCharacters(_user!.userID, _authResponse!.accessToken);
+  Future<List<Character>> _fetchCharacterDetails(int userId, String token) async {
+    final ownedCharacters = await _authService.getOwnedCharacters(userId, token);
     if (ownedCharacters.isEmpty) return [];
-    final detailFutures = ownedCharacters.map((owned) => _authService.getCharacterDetails(owned.characterId, _authResponse!.accessToken));
+    final detailFutures = ownedCharacters.map((owned) => _authService.getCharacterDetails(owned.characterId, token));
     return await Future.wait(detailFutures);
   }
 
-  Future<List<DollVariant>> _fetchDollDetails() async {
-    if (_user == null || _authResponse == null) throw Exception('User not authenticated.');
-    final ownedDolls = await _authService.getOwnedDolls(_user!.userID, _authResponse!.accessToken);
+  Future<List<DollVariant>> _fetchDollDetails(int userId, String token) async {
+    final ownedDolls = await _authService.getOwnedDolls(userId, token);
     if (ownedDolls.isEmpty) return [];
-    final detailFutures = ownedDolls.map((owned) => _authService.getDollVariantDetails(owned.dollVariantId, _authResponse!.accessToken));
+    final detailFutures = ownedDolls.map((owned) => _authService.getDollVariantDetails(owned.dollVariantId, token));
     return await Future.wait(detailFutures);
   }
 
@@ -67,7 +67,7 @@ class _LibraryPageState extends State<LibraryPage> {
     const Color primaryColor = Color(0xFF87CEEB); // Sky Blue
 
     return Scaffold(
-      backgroundColor: Colors.grey[100], // Consistent background color
+      backgroundColor: Colors.grey[100],
       appBar: AppBar(
         title: const Text('Library', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
         backgroundColor: Colors.transparent,
@@ -77,35 +77,48 @@ class _LibraryPageState extends State<LibraryPage> {
           decoration: const BoxDecoration(gradient: LinearGradient(colors: [Color(0xFF6A11CB), Color(0xFF2575FC)], begin: Alignment.topLeft, end: Alignment.bottomRight)),
         ),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+      body: RefreshIndicator(
+        onRefresh: () async {
+          setState(() {
+            final session = SessionService();
+             if (session.user != null && session.authResponse != null) {
+              _detailedCharactersFuture = _fetchCharacterDetails(session.user!.userID, session.authResponse!.accessToken);
+              _detailedDollsFuture = _fetchDollDetails(session.user!.userID, session.authResponse!.accessToken);
+            } 
+          });
+        },
         child: Column(
           children: [
             Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8.0),
-              child: TextField(
-                controller: _searchController,
-                decoration: InputDecoration(
-                  hintText: 'Search in Library...',
-                  prefixIcon: const Icon(Icons.search, color: primaryColor),
-                  filled: true,
-                  fillColor: Colors.white, // Changed for better contrast
-                  border: const OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12.0)), borderSide: BorderSide.none),
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-            Container(
-              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12)), // Changed for better contrast
-              child: Row(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
                 children: [
-                  Expanded(child: _buildToggleButton(context, 'Dolls', _showDolls, primaryColor)),
-                  Expanded(child: _buildToggleButton(context, 'Characters', !_showDolls, primaryColor)),
+                  TextField(
+                    controller: _searchController,
+                    decoration: InputDecoration(
+                      hintText: 'Search in Library...',
+                      prefixIcon: const Icon(Icons.search, color: primaryColor),
+                      filled: true,
+                      fillColor: Colors.white,
+                      border: const OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12.0)), borderSide: BorderSide.none),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Container(
+                    decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12)),
+                    child: Row(
+                      children: [
+                        Expanded(child: _buildToggleButton(context, 'Dolls', _showDolls, primaryColor)),
+                        Expanded(child: _buildToggleButton(context, 'Characters', !_showDolls, primaryColor)),
+                      ],
+                    ),
+                  ),
                 ],
               ),
             ),
-            const SizedBox(height: 20),
-            _showDolls ? _buildDollsGrid() : _buildCharactersGrid(),
+            Expanded(
+              child: _showDolls ? _buildDollsGrid() : _buildCharactersGrid(),
+            ),
           ],
         ),
       ),
@@ -124,7 +137,6 @@ class _LibraryPageState extends State<LibraryPage> {
         } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
           return const Center(child: Text('No characters found.'));
         } else {
-          // Filter the list based on the search query
           final filteredCharacters = snapshot.data!.where((character) {
             return character.name.toLowerCase().contains(_searchQuery.toLowerCase());
           }).toList();
@@ -134,13 +146,25 @@ class _LibraryPageState extends State<LibraryPage> {
           }
 
           return GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2, crossAxisSpacing: 16, mainAxisSpacing: 16, childAspectRatio: 0.8),
             itemCount: filteredCharacters.length,
             itemBuilder: (context, index) {
               final character = filteredCharacters[index];
-              return _buildGridItem(character.name, character.image, false, const Color(0xFF87CEEB));
+              // CORRECTED: Pass the navigation logic to the onTap parameter
+              return _buildGridItem(
+                character.name,
+                character.image,
+                onTap: () {
+                  Navigator.of(context).push(MaterialPageRoute(
+                    builder: (context) => ChatScreen(
+                      characterId: character.characterId.toString(),
+                      characterName: character.name,
+                      characterImageUrl: character.image ?? '',
+                    ),
+                  ));
+                },
+              );
             },
           );
         }
@@ -159,7 +183,6 @@ class _LibraryPageState extends State<LibraryPage> {
         } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
           return const Center(child: Text('No dolls found.'));
         } else {
-          // Filter the list based on the search query
           final filteredDolls = snapshot.data!.where((doll) {
             return doll.name.toLowerCase().contains(_searchQuery.toLowerCase());
           }).toList();
@@ -169,13 +192,13 @@ class _LibraryPageState extends State<LibraryPage> {
           }
 
           return GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2, crossAxisSpacing: 16, mainAxisSpacing: 16, childAspectRatio: 0.8),
             itemCount: filteredDolls.length,
             itemBuilder: (context, index) {
               final doll = filteredDolls[index];
-              return _buildGridItem(doll.name, doll.image, false, const Color(0xFF87CEEB));
+              // Dolls are not clickable for chat, so onTap is null
+              return _buildGridItem(doll.name, doll.image, onTap: null);
             },
           );
         }
@@ -191,34 +214,32 @@ class _LibraryPageState extends State<LibraryPage> {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 12),
         decoration: BoxDecoration(color: isSelected ? color : Colors.transparent, borderRadius: BorderRadius.circular(12)),
-        child: Center(child: Text(text, style: TextStyle(fontWeight: FontWeight.bold, color: isSelected ? Colors.white : color))),
+        child: Center(child: Text(text, style: TextStyle(fontWeight: FontWeight.bold, color: isSelected ? Colors.white : Colors.black54))),
       ),
     );
   }
 
-  Widget _buildGridItem(String name, String? imageUrl, bool isUsing, Color color) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [BoxShadow(color: Colors.grey.withOpacity(0.08), spreadRadius: 1, blurRadius: 8, offset: const Offset(0, 2))]
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(8.0),
+  Widget _buildGridItem(String name, String? imageUrl, {VoidCallback? onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Card(
+        elevation: 2,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        clipBehavior: Clip.antiAlias,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Expanded(
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.grey[200],
-                  borderRadius: BorderRadius.circular(8),
-                  image: DecorationImage(image: NetworkImage(imageUrl ?? 'https://placekitten.com/200/200'), fit: BoxFit.cover),
-                ),
+              child: Image.network(
+                imageUrl ?? 'https://res.cloudinary.com/dygipvoal/image/upload/v1760081448/jirj9tgnupvsa0blmaua.jpg',
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) => const Icon(Icons.error, color: Colors.grey, size: 40),
               ),
             ),
-            const SizedBox(height: 8),
-            Text(name, style: const TextStyle(fontWeight: FontWeight.bold), textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis),
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Text(name, style: const TextStyle(fontWeight: FontWeight.bold), textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis),
+            ),
           ],
         ),
       ),

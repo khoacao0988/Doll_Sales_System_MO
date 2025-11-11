@@ -17,7 +17,7 @@ dependencies:
   mobile_scanner: ^4.0.0
   url_launcher: ^6.3.2
 
-  # Firebase & Notifications (Updated versions)
+  # Firebase & Notifications
   firebase_core: ^3.0.0
   firebase_messaging: ^15.0.0
   flutter_local_notifications: ^17.0.0
@@ -31,6 +31,11 @@ dependencies:
 
   # For date formatting
   intl: ^0.19.0
+
+  # For AI Chat (Text input, Audio output)
+  just_audio: ^0.9.36
+
+  flutter_launcher_icons: ^0.13.0
 
 dev_dependencies:
   flutter_test:

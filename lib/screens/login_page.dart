@@ -25,6 +25,9 @@ class _LoginPageState extends State<LoginPage> {
   String? _errorMessage;
   bool _isPasswordObscured = true;
 
+  // Re-enable Google Sign-In
+  final bool _isGoogleSignInEnabled = true;
+
   Future<void> _login() async {
     setState(() {
       _isLoading = true;
@@ -40,13 +43,13 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Future<void> _signInWithGoogle() async {
+    if (!_isGoogleSignInEnabled) return;
     setState(() {
       _isLoading = true;
       _errorMessage = null;
     });
 
     try {
-      // Initialize GoogleSignIn with the Web Client ID for backend authentication.
       final GoogleSignIn googleSignIn = GoogleSignIn(
         serverClientId: '117505181305-ta0t5dfuub24c7o4e885vlfn5ro6ppd2.apps.googleusercontent.com',
       );
@@ -57,7 +60,6 @@ class _LoginPageState extends State<LoginPage> {
         return;
       }
 
-      // Directly get the ID token from the Google Sign-In authentication object.
       final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
       final String? idToken = googleAuth.idToken;
 
@@ -72,7 +74,6 @@ class _LoginPageState extends State<LoginPage> {
     } catch (e) {
       _handleLoginError(e);
     } finally {
-      // Ensure Google sign out to allow account switching
       await GoogleSignIn().signOut();
     }
   }
@@ -166,15 +167,17 @@ class _LoginPageState extends State<LoginPage> {
                   child: _isLoading ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : const Text('LOGIN', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                 ),
                 const SizedBox(height: 20),
-                Row(children: <Widget>[const Expanded(child: Divider(color: Colors.grey)), Padding(padding: const EdgeInsets.symmetric(horizontal: 8.0), child: Text('Or continue with', style: TextStyle(color: Colors.grey[600]))), const Expanded(child: Divider(color: Colors.grey))]),
-                const SizedBox(height: 20),
-                OutlinedButton.icon(
-                  icon: const Text('G', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.blue)),
-                  label: const Text('Google', style: TextStyle(color: Colors.black54, fontWeight: FontWeight.bold)),
-                  onPressed: _isLoading ? null : _signInWithGoogle,
-                  style: OutlinedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 12), side: BorderSide(color: Colors.grey.shade300), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
-                ),
-                const SizedBox(height: 40),
+                if (_isGoogleSignInEnabled) ...[
+                  Row(children: <Widget>[const Expanded(child: Divider(color: Colors.grey)), Padding(padding: const EdgeInsets.symmetric(horizontal: 8.0), child: Text('Or continue with', style: TextStyle(color: Colors.grey[600]))), const Expanded(child: Divider(color: Colors.grey))]),
+                  const SizedBox(height: 20),
+                  OutlinedButton.icon(
+                    icon: const Text('G', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.blue)),
+                    label: const Text('Google', style: TextStyle(color: Colors.black54, fontWeight: FontWeight.bold)),
+                    onPressed: _isLoading ? null : _signInWithGoogle,
+                    style: OutlinedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 12), side: BorderSide(color: Colors.grey.shade300), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                  ),
+                  const SizedBox(height: 40),
+                ],
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [

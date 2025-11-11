@@ -1,0 +1,6 @@
+flutter_launcher_icons:
+  android: "launcher_icon"
+  # We are on Windows, so we don't need to generate iOS icons.
+  ios: false 
+  image_path: "assets/netcore.png"
+  min_sdk_android: 21
