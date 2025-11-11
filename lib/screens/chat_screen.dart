@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -59,14 +60,12 @@ class _ChatScreenState extends State<ChatScreen> {
   void initState() {
     super.initState();
     _audioPlayer = AudioPlayer();
-    // Add an initial greeting from the AI
-    setState(() {
-      _messages.add(ChatMessage(text: "Hi, tell me something!", isUser: false));
-    });
+    _addBotMessage("Hi, tell me something!");
   }
 
   @override
   void dispose() {
+    _textController.dispose();
     _audioPlayer.dispose();
     super.dispose();
   }
@@ -89,23 +88,40 @@ class _ChatScreenState extends State<ChatScreen> {
           "text": text,
           "character_id": widget.characterId,
         }),
-      ).timeout(const Duration(seconds: 60));
+      ).timeout(const Duration(minutes: 2));
 
-      if (response.statusCode == 200) {
-        // Play the returned audio bytes
-        final audioSource = MyCustomAudioSource(response.bodyBytes);
-        await _audioPlayer.setAudioSource(audioSource);
-        _audioPlayer.play();
-        _addBotMessage("[${widget.characterName} Replying...]");
-      } else {
-        _addBotMessage("Error from server: ${response.statusCode}");
+      // Success case: Status is 200 and content is audio
+      if (response.statusCode == 200 && response.headers['content-type']?.contains('audio/mpeg') == true) {
+        try {
+          final audioSource = MyCustomAudioSource(response.bodyBytes);
+          await _audioPlayer.setAudioSource(audioSource);
+          _audioPlayer.play();
+          _addBotMessage("[${widget.characterName} is replying...]");
+        } catch (e) {
+          _addBotMessage("Failed to play audio: $e");
+        }
+      } else { // Error case: Status is not 200 or content is not audio
+        String errorMessage;
+        try {
+          // Try to parse the JSON error body from the backend
+          final errorBody = utf8.decode(response.bodyBytes);
+          final errorJson = jsonDecode(errorBody);
+          // FastAPI returns errors in {"detail": "message"}
+          errorMessage = errorJson['detail'] ?? "Unknown server error.";
+        } catch (e) {
+          // If parsing fails, fall back to status code and reason phrase
+          errorMessage = "Error ${response.statusCode}: ${response.reasonPhrase}";
+        }
+        _addBotMessage("Server Error: $errorMessage");
       }
-    } catch (e) {
-      _addBotMessage("Error: $e");
+    } catch (e) { // Handles timeouts and other network errors
+      _addBotMessage("Network Error: $e");
     } finally {
-      setState(() {
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
   
@@ -129,13 +145,12 @@ class _ChatScreenState extends State<ChatScreen> {
               padding: const EdgeInsets.all(8.0),
               itemCount: _messages.length,
               itemBuilder: (context, index) {
-                final message = _messages[index];
-                return _buildMessageBubble(message);
+                return _buildMessageBubble(_messages[index]);
               },
             ),
           ),
           if (_isLoading) const Padding(
-            padding: EdgeInsets.all(8.0),
+            padding: EdgeInsets.symmetric(vertical: 8.0),
             child: LinearProgressIndicator(),
           ),
           _buildInputArea(),
@@ -178,7 +193,7 @@ class _ChatScreenState extends State<ChatScreen> {
               child: TextField(
                 controller: _textController,
                 decoration: const InputDecoration.collapsed(
-                  hintText: 'Enter your message...',
+                  hintText: 'Send a message...',
                 ),
                 onSubmitted: (_) => _sendMessage(),
               ),

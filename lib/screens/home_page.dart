@@ -38,6 +38,8 @@ class _HomePageState extends State<HomePage> {
     _videoController = VideoPlayerController.networkUrl(
       Uri.parse('https://res.cloudinary.com/dygipvoal/video/upload/v1762022212/myhc16ricbztewdpzjcg.mp4'),
     )..initialize().then((_) {
+        // CORRECTED: Mute the video by setting volume to 0
+        _videoController.setVolume(0.0);
         _videoController.setLooping(true);
         _videoController.play();
         setState(() {});

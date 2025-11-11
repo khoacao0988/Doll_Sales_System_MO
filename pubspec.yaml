@@ -32,16 +32,15 @@ dependencies:
   # For date formatting
   intl: ^0.19.0
 
-  # For AI Chat (Text input, Audio output)
+  # For AI Chat (Text input, Audio output ONLY)
   just_audio: ^0.9.36
-
-  flutter_launcher_icons: ^0.13.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
 
   flutter_lints: ^5.0.0
+  flutter_launcher_icons: ^0.13.1
 
 flutter:
   uses-material-design: true
