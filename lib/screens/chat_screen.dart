@@ -1,11 +1,14 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'dart:convert';
 import 'package:just_audio/just_audio.dart';
+import 'package:speech_to_text/speech_recognition_result.dart';
+import 'package:speech_to_text/speech_to_text.dart';
 
-// Custom AudioSource for just_audio to play from a byte stream
+// Custom AudioSource to play from a byte stream
 class MyCustomAudioSource extends StreamAudioSource {
   final List<int> bytes;
   MyCustomAudioSource(this.bytes);
@@ -22,14 +25,6 @@ class MyCustomAudioSource extends StreamAudioSource {
       contentType: 'audio/mpeg',
     );
   }
-}
-
-// A simple data model for a chat message
-class ChatMessage {
-  final String text;
-  final bool isUser;
-
-  ChatMessage({required this.text, required this.isUser});
 }
 
 class ChatScreen extends StatefulWidget {
@@ -49,10 +44,14 @@ class ChatScreen extends StatefulWidget {
 }
 
 class _ChatScreenState extends State<ChatScreen> {
-  final TextEditingController _textController = TextEditingController();
-  final List<ChatMessage> _messages = [];
   late final AudioPlayer _audioPlayer;
+  final SpeechToText _speechToText = SpeechToText();
+
+  bool _speechEnabled = false;
+  bool _isListening = false;
   bool _isLoading = false;
+  String _statusText = "";
+  String _recognizedWords = "";
 
   final String backendUrl = "https://ai-character-service.onrender.com/api/chat";
 
@@ -60,25 +59,88 @@ class _ChatScreenState extends State<ChatScreen> {
   void initState() {
     super.initState();
     _audioPlayer = AudioPlayer();
-    _addBotMessage("Hi, tell me something!");
+    _initSpeech();
+    // Listen to player state to update UI
+    _audioPlayer.playerStateStream.listen((state) {
+      if (!mounted) return;
+      if (state.processingState == ProcessingState.completed ||
+          state.processingState == ProcessingState.ready) {
+        if (!_isListening) {
+          setState(() {
+            _statusText = "Nhấn vào micro để nói";
+          });
+        }
+      }
+    });
+    setState(() {
+      _statusText = "Nhấn vào micro để nói";
+    });
   }
 
   @override
   void dispose() {
-    _textController.dispose();
     _audioPlayer.dispose();
+    _speechToText.stop();
     super.dispose();
   }
 
-  Future<void> _sendMessage() async {
-    final text = _textController.text;
-    if (text.isEmpty) return;
+  Future<void> _initSpeech() async {
+    _speechEnabled = await _speechToText.initialize();
+    if (!mounted) return;
+    setState(() {});
+  }
 
+  Future<void> _startListening() async {
+    await _speechToText.listen(
+      onResult: _onSpeechResult,
+      localeId: "vi_VN",
+    );
+    if (!mounted) return;
     setState(() {
-      _messages.insert(0, ChatMessage(text: text, isUser: true));
-      _isLoading = true;
+      _isListening = true;
+      _statusText = "Đang nghe...";
     });
-    _textController.clear();
+  }
+
+  Future<void> _stopListening() async {
+    await _speechToText.stop();
+    if (!mounted) return;
+    setState(() {
+      _isListening = false;
+    });
+  }
+
+  void _onSpeechResult(SpeechRecognitionResult result) {
+    if (!mounted) return;
+    setState(() {
+      _recognizedWords = result.recognizedWords;
+      _statusText = '"$_recognizedWords"' ;
+    });
+    if (result.finalResult) {
+      if (!mounted) return;
+      setState(() {
+        _isListening = false;
+      });
+      _sendMessage();
+    }
+  }
+
+  Future<void> _sendMessage() async {
+    if (_speechToText.isListening) {
+      await _stopListening();
+    }
+
+    final text = _recognizedWords;
+    if (text.isEmpty) {
+      setState(() => _statusText = "Không nhận được giọng nói. Thử lại!");
+      return;
+    }
+
+    if (!mounted) return;
+    setState(() {
+      _isLoading = true;
+      _statusText = "${widget.characterName} đang suy nghĩ...";
+    });
 
     try {
       final response = await http.post(
@@ -90,45 +152,33 @@ class _ChatScreenState extends State<ChatScreen> {
         }),
       ).timeout(const Duration(minutes: 2));
 
-      // Success case: Status is 200 and content is audio
       if (response.statusCode == 200 && response.headers['content-type']?.contains('audio/mpeg') == true) {
-        try {
-          final audioSource = MyCustomAudioSource(response.bodyBytes);
-          await _audioPlayer.setAudioSource(audioSource);
-          _audioPlayer.play();
-          _addBotMessage("[${widget.characterName} is replying...]");
-        } catch (e) {
-          _addBotMessage("Failed to play audio: $e");
-        }
-      } else { // Error case: Status is not 200 or content is not audio
+        setState(() {
+          _statusText = "${widget.characterName} đang trả lời...";
+        });
+        final audioSource = MyCustomAudioSource(response.bodyBytes);
+        await _audioPlayer.setAudioSource(audioSource);
+        _audioPlayer.play();
+      } else {
         String errorMessage;
         try {
-          // Try to parse the JSON error body from the backend
           final errorBody = utf8.decode(response.bodyBytes);
           final errorJson = jsonDecode(errorBody);
-          // FastAPI returns errors in {"detail": "message"}
           errorMessage = errorJson['detail'] ?? "Unknown server error.";
         } catch (e) {
-          // If parsing fails, fall back to status code and reason phrase
           errorMessage = "Error ${response.statusCode}: ${response.reasonPhrase}";
         }
-        _addBotMessage("Server Error: $errorMessage");
+         if (!mounted) return;
+        setState(() => _statusText = "Lỗi: $errorMessage");
       }
-    } catch (e) { // Handles timeouts and other network errors
-      _addBotMessage("Network Error: $e");
+    } catch (e) {
+      if (!mounted) return;
+       setState(() => _statusText = "Lỗi mạng: $e");
     } finally {
       if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
+        setState(() => _isLoading = false);
       }
     }
-  }
-  
-  void _addBotMessage(String text) {
-      setState(() {
-          _messages.insert(0, ChatMessage(text: text, isUser: false));
-      });
   }
 
   @override
@@ -136,73 +186,60 @@ class _ChatScreenState extends State<ChatScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text("Chat with ${widget.characterName}"),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        titleTextStyle: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+        iconTheme: const IconThemeData(color: Colors.white),
       ),
-      body: Column(
-        children: [
-          Expanded(
-            child: ListView.builder(
-              reverse: true,
-              padding: const EdgeInsets.all(8.0),
-              itemCount: _messages.length,
-              itemBuilder: (context, index) {
-                return _buildMessageBubble(_messages[index]);
-              },
+      extendBodyBehindAppBar: true,
+      body: Container(
+        width: double.infinity,
+        height: double.infinity,
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Colors.blue, Colors.purple],
+          ),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            const Spacer(flex: 2),
+            CircleAvatar(
+              radius: 100,
+              backgroundImage: NetworkImage(widget.characterImageUrl),
+              backgroundColor: Colors.white.withOpacity(0.5),
             ),
-          ),
-          if (_isLoading) const Padding(
-            padding: EdgeInsets.symmetric(vertical: 8.0),
-            child: LinearProgressIndicator(),
-          ),
-          _buildInputArea(),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMessageBubble(ChatMessage message) {
-    final align = message.isUser ? CrossAxisAlignment.end : CrossAxisAlignment.start;
-    final color = message.isUser ? Colors.blue.shade300 : Colors.grey.shade200;
-    final textColor = message.isUser ? Colors.white : Colors.black;
-
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 8.0),
-      child: Column(
-        crossAxisAlignment: align,
-        children: [
-          Container(
-            padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 15.0),
-            decoration: BoxDecoration(
-              color: color,
-              borderRadius: BorderRadius.circular(20.0),
-            ),
-            child: Text(message.text, style: TextStyle(color: textColor)),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildInputArea() {
-    return Container(
-      padding: const EdgeInsets.all(8.0),
-      decoration: BoxDecoration(color: Theme.of(context).cardColor, boxShadow: const [BoxShadow(blurRadius: 1, color: Colors.black12, spreadRadius: 1)]),
-      child: SafeArea(
-        child: Row(
-          children: [
-            Expanded(
-              child: TextField(
-                controller: _textController,
-                decoration: const InputDecoration.collapsed(
-                  hintText: 'Send a message...',
+            const SizedBox(height: 20),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24.0),
+              child: Text(
+                _statusText,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 22,
+                  fontWeight: FontWeight.w500,
                 ),
-                onSubmitted: (_) => _sendMessage(),
               ),
             ),
-            IconButton(
-              icon: const Icon(Icons.send),
-              onPressed: _isLoading ? null : _sendMessage,
-              color: Theme.of(context).primaryColor,
+            const Spacer(flex: 3),
+            GestureDetector(
+              onTap: (_isLoading || !_speechEnabled)
+                  ? null
+                  : (_isListening ? _stopListening : _startListening),
+              child: CircleAvatar(
+                radius: 40,
+                backgroundColor: _isListening ? Colors.red.shade700 : Theme.of(context).primaryColor,
+                child: Icon(
+                  _isListening ? Icons.mic_off : Icons.mic,
+                  color: Colors.white,
+                  size: 40,
+                ),
+              ),
             ),
+            const Spacer(flex: 1),
           ],
         ),
       ),

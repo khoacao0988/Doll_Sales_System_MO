@@ -34,6 +34,7 @@ dependencies:
 
   # For AI Chat (Text input, Audio output ONLY)
   just_audio: ^0.9.36
+  speech_to_text: ^7.3.0
 
 dev_dependencies:
   flutter_test:
