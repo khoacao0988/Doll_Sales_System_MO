@@ -8,22 +8,15 @@ class CreateNewPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    const skyBlueColor = Color(0xFF87CEEB);
+
     return Scaffold(
         backgroundColor: Colors.grey[100], // Consistent background color
         appBar: AppBar(
           title: const Text('Create New', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-          backgroundColor: Colors.transparent,
+          backgroundColor: skyBlueColor, // Changed to sky blue
           elevation: 0,
           automaticallyImplyLeading: false,
-          flexibleSpace: Container(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                colors: [Color(0xFF6A11CB), Color(0xFF2575FC)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-            ),
-          ),
         ),
         body: Padding(
           padding: const EdgeInsets.all(16.0),

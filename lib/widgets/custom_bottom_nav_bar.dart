@@ -17,13 +17,11 @@ class CustomBottomNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    const skyBlueColor = Color(0xFF87CEEB);
+
     return Container(
       decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Color(0xFF6A11CB), Color(0xFF2575FC)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        color: skyBlueColor, // Changed to sky blue
         boxShadow: [
           BoxShadow(
             color: Colors.black26,
@@ -51,6 +49,7 @@ class CustomBottomNavBar extends StatelessWidget {
 
   Widget _buildNavItem(BuildContext context, NavItem item, IconData icon) {
     final isSelected = currentItem == item;
+    const skyBlueColor = Color(0xFF87CEEB);
 
     if (item == NavItem.add) {
       return GestureDetector(
@@ -62,7 +61,7 @@ class CustomBottomNavBar extends StatelessWidget {
         },
         child: CircleAvatar(
           backgroundColor: isSelected ? Colors.white : Colors.white70,
-          child: const Icon(Icons.add, color: Color(0xFF6A11CB)),
+          child: const Icon(Icons.add, color: skyBlueColor), // Changed icon color
         ),
       );
     }

@@ -25,8 +25,8 @@ class _LoginPageState extends State<LoginPage> {
   String? _errorMessage;
   bool _isPasswordObscured = true;
 
-  // Re-enable Google Sign-In
-  final bool _isGoogleSignInEnabled = true;
+  // Temporarily disable Google Sign-In
+  final bool _isGoogleSignInEnabled = false;
 
   Future<void> _login() async {
     setState(() {
@@ -50,8 +50,9 @@ class _LoginPageState extends State<LoginPage> {
     });
 
     try {
+      // Use the correct Web Client ID for the backend
       final GoogleSignIn googleSignIn = GoogleSignIn(
-        serverClientId: '117505181305-ta0t5dfuub24c7o4e885vlfn5ro6ppd2.apps.googleusercontent.com',
+        serverClientId: '117505181305-ta0t5dfuub24c7o4e885vlfn5ro6ppd2.apps.googleusercontent.com', 
       );
 
       final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
@@ -73,8 +74,6 @@ class _LoginPageState extends State<LoginPage> {
 
     } catch (e) {
       _handleLoginError(e);
-    } finally {
-      await GoogleSignIn().signOut();
     }
   }
 
@@ -124,6 +123,8 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
+    const skyBlueColor = Color(0xFF87CEEB);
+
     return Scaffold(
       backgroundColor: Colors.grey[100],
       body: SafeArea(
@@ -134,7 +135,7 @@ class _LoginPageState extends State<LoginPage> {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: <Widget>[
-                const Text('Doll World', textAlign: TextAlign.center, style: TextStyle(fontSize: 36, fontWeight: FontWeight.bold, color: Color(0xFF3F51B5))),
+                const Text('Doll World', textAlign: TextAlign.center, style: TextStyle(fontSize: 36, fontWeight: FontWeight.bold, color: skyBlueColor)),
                 const SizedBox(height: 10),
                 const Text('Welcome back!', textAlign: TextAlign.center, style: TextStyle(fontSize: 18, color: Colors.black54)),
                 const SizedBox(height: 50),
@@ -143,7 +144,7 @@ class _LoginPageState extends State<LoginPage> {
                     padding: const EdgeInsets.only(bottom: 16.0),
                     child: Text(_errorMessage!, style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold), textAlign: TextAlign.center),
                   ),
-                TextField(controller: _usernameController, decoration: const InputDecoration(hintText: 'Username', filled: true, fillColor: Colors.white, prefixIcon: Icon(Icons.person_outline, color: Color(0xFF3F51B5)), border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12)), borderSide: BorderSide.none))),
+                TextField(controller: _usernameController, decoration: const InputDecoration(hintText: 'Username', filled: true, fillColor: Colors.white, prefixIcon: Icon(Icons.person_outline, color: skyBlueColor), border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12)), borderSide: BorderSide.none))),
                 const SizedBox(height: 16),
                 TextField(
                   controller: _passwordController,
@@ -152,9 +153,9 @@ class _LoginPageState extends State<LoginPage> {
                     hintText: 'Password',
                     filled: true,
                     fillColor: Colors.white,
-                    prefixIcon: const Icon(Icons.lock_outline, color: Color(0xFF3F51B5)),
+                    prefixIcon: const Icon(Icons.lock_outline, color: skyBlueColor),
                     suffixIcon: IconButton(
-                      icon: Icon(_isPasswordObscured ? Icons.visibility_off_outlined : Icons.visibility_outlined, color: const Color(0xFF3F51B5)),
+                      icon: Icon(_isPasswordObscured ? Icons.visibility_off_outlined : Icons.visibility_outlined, color: skyBlueColor),
                       onPressed: () => setState(() => _isPasswordObscured = !_isPasswordObscured),
                     ),
                     border: const OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12)), borderSide: BorderSide.none),
@@ -163,7 +164,7 @@ class _LoginPageState extends State<LoginPage> {
                 const SizedBox(height: 30),
                 ElevatedButton(
                   onPressed: _isLoading ? null : _login,
-                  style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF3F51B5), foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                  style: ElevatedButton.styleFrom(backgroundColor: skyBlueColor, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
                   child: _isLoading ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : const Text('LOGIN', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                 ),
                 const SizedBox(height: 20),
@@ -184,7 +185,7 @@ class _LoginPageState extends State<LoginPage> {
                     Text("Not a member? ", style: TextStyle(color: Colors.grey[600], fontSize: 14)),
                     GestureDetector(
                       onTap: _launchURL,
-                      child: const Text('Register now', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF3F51B5), fontSize: 14)),
+                      child: const Text('Register now', style: TextStyle(fontWeight: FontWeight.bold, color: skyBlueColor, fontSize: 14)),
                     ),
                   ],
                 )

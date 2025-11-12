@@ -73,16 +73,17 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     final userName = SessionService().user?.userName ?? 'User';
+    const skyBlueColor = Color(0xFF87CEEB);
+
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: skyBlueColor, // Changed to sky blue
         elevation: 0,
         automaticallyImplyLeading: false,
         title: const Text('Home', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-        flexibleSpace: Container(decoration: const BoxDecoration(gradient: LinearGradient(colors: [Color(0xFF6A11CB), Color(0xFF2575FC)], begin: Alignment.topLeft, end: Alignment.bottomRight))),
         actions: [
           IconButton(icon: const Icon(Icons.notifications_none_outlined, color: Colors.white), onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (context) => const NotificationPage()))),
-          Padding(padding: const EdgeInsets.only(right: 12.0, left: 8.0), child: CircleAvatar(backgroundColor: Colors.white, child: Text(userName.isNotEmpty ? userName.substring(0, 1).toUpperCase() : 'U', style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF6A11CB))))),
+          Padding(padding: const EdgeInsets.only(right: 12.0, left: 8.0), child: CircleAvatar(backgroundColor: Colors.white, child: Text(userName.isNotEmpty ? userName.substring(0, 1).toUpperCase() : 'U', style: const TextStyle(fontWeight: FontWeight.bold, color: skyBlueColor)))),
         ],
       ),
       body: Stack(

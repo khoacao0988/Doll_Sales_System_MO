@@ -70,12 +70,9 @@ class _LibraryPageState extends State<LibraryPage> {
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
         title: const Text('Library', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.transparent,
+        backgroundColor: primaryColor, // Changed to sky blue
         elevation: 0,
         automaticallyImplyLeading: false,
-        flexibleSpace: Container(
-          decoration: const BoxDecoration(gradient: LinearGradient(colors: [Color(0xFF6A11CB), Color(0xFF2575FC)], begin: Alignment.topLeft, end: Alignment.bottomRight)),
-        ),
       ),
       body: RefreshIndicator(
         onRefresh: () async {

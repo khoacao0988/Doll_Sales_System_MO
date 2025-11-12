@@ -110,22 +110,15 @@ class _YourPageState extends State<YourPage> {
 
   @override
   Widget build(BuildContext context) {
+    const skyBlueColor = Color(0xFF87CEEB);
+
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
         title: const Text('Your Connections', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.transparent,
+        backgroundColor: skyBlueColor, // Changed to sky blue
         elevation: 0,
         automaticallyImplyLeading: false,
-        flexibleSpace: Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              colors: [Color(0xFF6A11CB), Color(0xFF2575FC)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-          ),
-        ),
       ),
       body: FutureBuilder<List<FullLinkedInfo>>(
         future: _linkedInfoFuture,

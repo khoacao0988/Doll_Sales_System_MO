@@ -11,6 +11,7 @@ class ProfilePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final User? user = SessionService().user;
+    const skyBlueColor = Color(0xFF87CEEB);
 
     if (user == null) {
       return const Scaffold(
@@ -26,19 +27,13 @@ class ProfilePage extends StatelessWidget {
             expandedHeight: 200.0,
             floating: false,
             pinned: true,
-            backgroundColor: Colors.transparent,
+            backgroundColor: skyBlueColor, // Changed to sky blue
             elevation: 0,
             automaticallyImplyLeading: false,
             flexibleSpace: FlexibleSpaceBar(
               title: const Text('My Profile', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, shadows: [Shadow(blurRadius: 2, color: Colors.black45)])),
               background: Container(
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [Color(0xFF6A11CB), Color(0xFF2575FC)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                ),
+                color: skyBlueColor, // Set a solid background color
                 child: Image.network(
                   'https://res.cloudinary.com/dygipvoal/image/upload/v1762391998/di1z5bqlmnimy5knpjdv.png',
                   fit: BoxFit.cover,
@@ -52,9 +47,9 @@ class ProfilePage extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(24, 24, 24, 0), // Adjusted padding
             sliver: SliverList(
               delegate: SliverChildListDelegate([
-                _buildInfoSection(user),
+                _buildInfoSection(user, skyBlueColor),
                 const SizedBox(height: 30),
-                _buildActionButtons(context),
+                _buildActionButtons(context, skyBlueColor),
               ]),
             ),
           ),
@@ -64,25 +59,25 @@ class ProfilePage extends StatelessWidget {
     );
   }
 
-  Widget _buildInfoSection(User user) {
+  Widget _buildInfoSection(User user, Color themeColor) {
     return Column(
       children: [
-        _buildInfoField('Username', user.userName, Icons.person_outline),
+        _buildInfoField('Username', user.userName, Icons.person_outline, themeColor),
         const SizedBox(height: 16),
         if (user.fullName != null && user.fullName!.isNotEmpty) ...[
-          _buildInfoField('Full Name', user.fullName!, Icons.badge_outlined),
+          _buildInfoField('Full Name', user.fullName!, Icons.badge_outlined, themeColor),
           const SizedBox(height: 16),
         ],
-        _buildInfoField('Email', user.email, Icons.email_outlined),
+        _buildInfoField('Email', user.email, Icons.email_outlined, themeColor),
         const SizedBox(height: 16),
         if (user.phones != null && user.phones!.isNotEmpty) ...[
-           _buildInfoField('Phone', user.phones!, Icons.phone_outlined),
+           _buildInfoField('Phone', user.phones!, Icons.phone_outlined, themeColor),
         ],
       ],
     );
   }
 
-  Widget _buildActionButtons(BuildContext context) {
+  Widget _buildActionButtons(BuildContext context, Color themeColor) {
     return Row(
       children: [
         Expanded(
@@ -93,10 +88,10 @@ class ProfilePage extends StatelessWidget {
               Navigator.of(context).push(MaterialPageRoute(builder: (context) => const EditProfilePage()));
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF3F51B5),
+              backgroundColor: themeColor,
               foregroundColor: Colors.white,
               elevation: 4,
-              shadowColor: const Color(0xFF3F51B5).withOpacity(0.4),
+              shadowColor: themeColor.withOpacity(0.4),
               padding: const EdgeInsets.symmetric(vertical: 14),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
@@ -127,7 +122,7 @@ class ProfilePage extends StatelessWidget {
     );
   }
 
-  Widget _buildInfoField(String label, String value, IconData icon) {
+  Widget _buildInfoField(String label, String value, IconData icon, Color themeColor) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
       decoration: BoxDecoration(
@@ -144,7 +139,7 @@ class ProfilePage extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Icon(icon, color: const Color(0xFF3F51B5).withOpacity(0.7)),
+          Icon(icon, color: themeColor.withOpacity(0.7)),
           const SizedBox(width: 20),
           Expanded(
             child: Column(
