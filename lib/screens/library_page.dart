@@ -1,10 +1,33 @@
 import 'package:flutter/material.dart';
 import '../models/character.dart';
 import '../models/doll_variant.dart';
+import '../models/user_character.dart';
 import '../services/auth_service.dart';
 import '../services/session_service.dart';
 import '../widgets/custom_bottom_nav_bar.dart';
-import 'chat_screen.dart'; // Import the new chat screen
+import 'chat_screen.dart';
+
+// Helper class to hold full character info including ownership details
+class FullCharacterInfo {
+  final UserCharacter ownership;
+  final Character details;
+
+  FullCharacterInfo({required this.ownership, required this.details});
+
+  bool get isInvalid {
+    // A character is invalid if its status is not 'Active'
+    if (ownership.status != 'Active') {
+      return true;
+    }
+    // Or if its end date has passed.
+    try {
+      return DateTime.now().isAfter(ownership.endAt);
+    } catch (e) {
+      // If parsing fails for any reason, treat as invalid to be safe.
+      return true;
+    }
+  }
+}
 
 class LibraryPage extends StatefulWidget {
   const LibraryPage({super.key});
@@ -15,7 +38,7 @@ class LibraryPage extends StatefulWidget {
 
 class _LibraryPageState extends State<LibraryPage> {
   bool _showDolls = true;
-  late Future<List<Character>> _detailedCharactersFuture;
+  late Future<List<FullCharacterInfo>> _detailedCharactersFuture;
   late Future<List<DollVariant>> _detailedDollsFuture;
   final AuthService _authService = AuthService();
 
@@ -30,7 +53,6 @@ class _LibraryPageState extends State<LibraryPage> {
       _detailedCharactersFuture = _fetchCharacterDetails(session.user!.userID, session.authResponse!.accessToken);
       _detailedDollsFuture = _fetchDollDetails(session.user!.userID, session.authResponse!.accessToken);
     } else {
-      // Handle not logged in case
       _detailedCharactersFuture = Future.value([]);
       _detailedDollsFuture = Future.value([]);
     }
@@ -48,10 +70,15 @@ class _LibraryPageState extends State<LibraryPage> {
     super.dispose();
   }
 
-  Future<List<Character>> _fetchCharacterDetails(int userId, String token) async {
-    final ownedCharacters = await _authService.getOwnedCharacters(userId, token);
+  Future<List<FullCharacterInfo>> _fetchCharacterDetails(int userId, String token) async {
+    final ownedCharacters = await _authService.getActiveUserCharacters(userId, token);
     if (ownedCharacters.isEmpty) return [];
-    final detailFutures = ownedCharacters.map((owned) => _authService.getCharacterDetails(owned.characterId, token));
+
+    final detailFutures = ownedCharacters.map((owned) async {
+      final details = await _authService.getCharacterDetails(owned.characterID, token);
+      return FullCharacterInfo(ownership: owned, details: details);
+    });
+
     return await Future.wait(detailFutures);
   }
 
@@ -70,7 +97,7 @@ class _LibraryPageState extends State<LibraryPage> {
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
         title: const Text('Library', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-        backgroundColor: primaryColor, // Changed to sky blue
+        backgroundColor: primaryColor,
         elevation: 0,
         automaticallyImplyLeading: false,
       ),
@@ -78,10 +105,10 @@ class _LibraryPageState extends State<LibraryPage> {
         onRefresh: () async {
           setState(() {
             final session = SessionService();
-             if (session.user != null && session.authResponse != null) {
+            if (session.user != null && session.authResponse != null) {
               _detailedCharactersFuture = _fetchCharacterDetails(session.user!.userID, session.authResponse!.accessToken);
               _detailedDollsFuture = _fetchDollDetails(session.user!.userID, session.authResponse!.accessToken);
-            } 
+            }
           });
         },
         child: Column(
@@ -124,7 +151,7 @@ class _LibraryPageState extends State<LibraryPage> {
   }
 
   Widget _buildCharactersGrid() {
-    return FutureBuilder<List<Character>>(
+    return FutureBuilder<List<FullCharacterInfo>>(
       future: _detailedCharactersFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
@@ -134,8 +161,8 @@ class _LibraryPageState extends State<LibraryPage> {
         } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
           return const Center(child: Text('No characters found.'));
         } else {
-          final filteredCharacters = snapshot.data!.where((character) {
-            return character.name.toLowerCase().contains(_searchQuery.toLowerCase());
+          final filteredCharacters = snapshot.data!.where((characterInfo) {
+            return characterInfo.details.name.toLowerCase().contains(_searchQuery.toLowerCase());
           }).toList();
 
           if (filteredCharacters.isEmpty) {
@@ -147,17 +174,17 @@ class _LibraryPageState extends State<LibraryPage> {
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2, crossAxisSpacing: 16, mainAxisSpacing: 16, childAspectRatio: 0.8),
             itemCount: filteredCharacters.length,
             itemBuilder: (context, index) {
-              final character = filteredCharacters[index];
-              // CORRECTED: Pass the navigation logic to the onTap parameter
+              final characterInfo = filteredCharacters[index];
               return _buildGridItem(
-                character.name,
-                character.image,
+                characterInfo.details.name,
+                characterInfo.details.image,
+                isInvalid: characterInfo.isInvalid, // Use the new isInvalid getter
                 onTap: () {
                   Navigator.of(context).push(MaterialPageRoute(
                     builder: (context) => ChatScreen(
-                      characterId: character.characterId.toString(),
-                      characterName: character.name,
-                      characterImageUrl: character.image ?? '',
+                      characterId: characterInfo.details.characterId.toString(),
+                      characterName: characterInfo.details.name,
+                      characterImageUrl: characterInfo.details.image ?? '',
                     ),
                   ));
                 },
@@ -194,8 +221,7 @@ class _LibraryPageState extends State<LibraryPage> {
             itemCount: filteredDolls.length,
             itemBuilder: (context, index) {
               final doll = filteredDolls[index];
-              // Dolls are not clickable for chat, so onTap is null
-              return _buildGridItem(doll.name, doll.image, onTap: null);
+              return _buildGridItem(doll.name, doll.image, isInvalid: false, onTap: null);
             },
           );
         }
@@ -216,27 +242,50 @@ class _LibraryPageState extends State<LibraryPage> {
     );
   }
 
-  Widget _buildGridItem(String name, String? imageUrl, {VoidCallback? onTap}) {
+  Widget _buildGridItem(String name, String? imageUrl, {required bool isInvalid, VoidCallback? onTap}) {
     return GestureDetector(
-      onTap: onTap,
+      onTap: isInvalid ? null : onTap, // Disable tap if invalid
       child: Card(
         elevation: 2,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         clipBehavior: Clip.antiAlias,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+        child: Stack(
           children: [
-            Expanded(
-              child: Image.network(
-                imageUrl ?? 'https://res.cloudinary.com/dygipvoal/image/upload/v1760081448/jirj9tgnupvsa0blmaua.jpg',
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) => const Icon(Icons.error, color: Colors.grey, size: 40),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(
+                  child: Image.network(
+                    imageUrl ?? 'https://res.cloudinary.com/dygipvoal/image/upload/v1760081448/jirj9tgnupvsa0blmaua.jpg',
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) => const Icon(Icons.error, color: Colors.grey, size: 40),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Text(name, style: const TextStyle(fontWeight: FontWeight.bold), textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis),
+                ),
+              ],
+            ),
+            if (isInvalid) // Show overlay if invalid
+              Positioned.fill(
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.6),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Center(
+                    child: Text(
+                      'Invalid',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
               ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Text(name, style: const TextStyle(fontWeight: FontWeight.bold), textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis),
-            ),
           ],
         ),
       ),

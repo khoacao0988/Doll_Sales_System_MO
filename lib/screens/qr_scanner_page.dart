@@ -67,20 +67,13 @@ class _QRScannerPageState extends State<QRScannerPage> {
 
   @override
   Widget build(BuildContext context) {
+    const skyBlueColor = Color(0xFF87CEEB);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Scan Doll QR Code', style: TextStyle(color: Colors.white)),
-        backgroundColor: Colors.transparent,
+        backgroundColor: skyBlueColor, // Changed to sky blue
         elevation: 0,
-        flexibleSpace: Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              colors: [Color(0xFF6A11CB), Color(0xFF2575FC)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-          ),
-        ),
       ),
       body: Stack(
         children: [

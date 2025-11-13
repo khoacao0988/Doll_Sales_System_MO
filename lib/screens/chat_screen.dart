@@ -183,6 +183,8 @@ class _ChatScreenState extends State<ChatScreen> {
 
   @override
   Widget build(BuildContext context) {
+    const skyBlueColor = Color(0xFF87CEEB);
+
     return Scaffold(
       appBar: AppBar(
         title: Text("Chat with ${widget.characterName}"),
@@ -196,11 +198,7 @@ class _ChatScreenState extends State<ChatScreen> {
         width: double.infinity,
         height: double.infinity,
         decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [Colors.blue, Colors.purple],
-          ),
+          color: skyBlueColor, // Changed to solid sky blue
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
